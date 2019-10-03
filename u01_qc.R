@@ -297,27 +297,29 @@ names(WFU_Olivier_co) <- Olivier_co_sheetnames
 WFU_Olivier_co[1] <- lapply(WFU_Olivier_co[1], separate, col = Parents, into = c("sires", "dames"), sep = "[[:space:]][x|X][[:space:]]") # col argument draws from tidyverse::vars_pull, which only returns only one column name
 WFU_Olivier_co[2] <- lapply(WFU_Olivier_co[2], separate, col = 'Parent ID\'s', into = c("sires", "dames"), sep = "[[:space:]]*[x|X][[:space:]]*") # some entries do not have the wrapping spaces i.e. rows [14, 45, 46] 
 
+# change irregular data types (case by case)
 WFU_Olivier_co[[1]]$`Transponder ID` <- as.character(WFU_Olivier_co[[1]]$`Transponder ID`) # from numeric to character
-
+# set column names without "Cocaine and date" header
+WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9], 
+                              function(x){
+                                names(x) <- x[1,] %>% as.character()
+                                x <- x[-1, ]
+                                return(x)})
 # # make variable names consistent
 ## XXX figure out the pattern from the original dataset to include in the else if statement
 uniform.var.names<- function(df){
   lapply(seq_along(df), function(i) {
-    if(grepl("^[Da|Si]", df[[i]][2])){
-      names(df[[i]])[1:2] <- df[[i]][1,1:2] %>% as.character()
+    if(grepl("Parent", names(df[[i]])) %>% any()){
+      names(df[[i]])[1:2] <- c("sires", "dames")
       df[[i]] <- df[[i]][-1, ]
       }
-    if(grepl("^Parent", names(df[[i]])) & !(df[[i]][1,] %in% c("Sires","Dames"))){
-        column <- grep(names(WFU_Olivier_co[[i]]), pattern = "Parent", value = T)
-        df[[i]] <- tidyr::extract(df[[i]], column, into = c('sires', 'dames'), '([0-9]+_[0-9]) [x|X] ([0-9]+_[0-9])')
-      } else if(grepl(XXpattern = "", WFU_Olivier_co_test[[1]][1,1:2]))
-    names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                   c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
-                                   c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
-    names(df[[i]]) <- tolower(names(df[[i]]))
-    df[[i]]
-  })
-}
+      names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
+                                     c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
+                                     c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
+      names(df[[i]]) <- tolower(names(df[[i]]))
+      df[[i]]
+      })
+  }
 
 WFU_Olivier_co_test <- uniform.var.names(WFU_Olivier_co)
 
@@ -328,8 +330,7 @@ names(WFU_Olivier_co_test[[1]])[1:2] <- WFU_Olivier_co_test[[1]][1,1:2] %>% as.c
 WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]][-1, ]
 # rename all sheets 
 names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
-# extract sires and dames column from the parents (s x d) column
-WFU_Olivier_co_test <- XX fill
+
 
 ######################
 ## Kalivas(Heroine) ##
