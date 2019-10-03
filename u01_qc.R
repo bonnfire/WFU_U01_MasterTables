@@ -307,7 +307,7 @@ WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9],
                                 return(x)})
 # # make variable names consistent
 ## XXX figure out the pattern from the original dataset to include in the else if statement
-uniform.var.names<- function(df){
+uniform.var.names.olivier <- function(df){
   lapply(seq_along(df), function(i) {
     if(grepl("Parent", names(df[[i]])) %>% any()){
       names(df[[i]])[1:2] <- c("sires", "dames")
@@ -321,16 +321,36 @@ uniform.var.names<- function(df){
       })
   }
 
-WFU_Olivier_co_test <- uniform.var.names(WFU_Olivier_co)
+WFU_Olivier_co_test <- uniform.var.names.olivier(WFU_Olivier_co)
 
-# fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (XX waiting for feedback)
-WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]] %>% 
-  mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
-names(WFU_Olivier_co_test[[1]])[1:2] <- WFU_Olivier_co_test[[1]][1,1:2] %>% as.character() %>% tolower()
-WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]][-1, ]
+# # remove all entries after 'scrubs'
+remove.scrubs.olivier <- function(df){
+  lapply(seq_along(df), function(i) {
+    rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub"))}) %>% which() 
+    if(is.integer(rownumber) && length(rownumber) != 0){
+      df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
+    }
+    return(df[[i]])
+    })
+  }
+WFU_Olivier_co_test <- remove.scrubs.olivier(WFU_Olivier_co_test)
+
+
+# removing erroneous na rows 
+# WFU_Olivier_co_test2 <- lapply(WFU_Olivier_co_test, na.omit)
+# lapply(WFU_Olivier_co_test2, function(df) sapply(df["rfid"], length))
+# get rid of the na columns
+
+# fix first table to account for: no ship date data(DONE)
+# WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]] %>% 
+#   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
+
 # rename all sheets 
 names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
 
+# check for uniform coat color 
+lapply(WFU_Olivier_co_test, function(df)
+  sapply(df["coatcolor"],unique))
 
 ######################
 ## Kalivas(Heroine) ##
