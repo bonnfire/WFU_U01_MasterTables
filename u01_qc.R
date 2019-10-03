@@ -335,18 +335,30 @@ remove.scrubs.and.narowsolivier <- function(df){
     return(df[[i]])
     })
   }
-WFU_Olivier_co_test2 <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
+WFU_Olivier_co_test <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
 
 # fix first table to account for: no ship date data(DONE)
 # WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]] %>% 
 #   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
 
-# rename all sheets 
-names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
-
 # check for uniform coat color 
 lapply(WFU_Olivier_co_test, function(df)
   sapply(df["coatcolor"],unique))
+
+uniform.coatcolors <- function(df){
+  lapply(seq_along(df), function(i) {
+    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
+                                      c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood", "[A|a]lbino"), 
+                                      c("BROWN", "BLACK", "HOOD", "ALBINO"))
+    df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
+    df[[i]]
+  })
+} 
+
+WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
+
+# rename all sheets 
+names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
 
 ######################
 ## Kalivas(Heroine) ##
