@@ -324,22 +324,18 @@ uniform.var.names.olivier <- function(df){
 WFU_Olivier_co_test <- uniform.var.names.olivier(WFU_Olivier_co)
 
 # # remove all entries after 'scrubs'
-remove.scrubs.olivier <- function(df){
+remove.scrubs.and.narowsolivier <- function(df){
   lapply(seq_along(df), function(i) {
     rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub"))}) %>% which() 
     if(is.integer(rownumber) && length(rownumber) != 0){
       df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
     }
+    df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
+    df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
     return(df[[i]])
     })
   }
-WFU_Olivier_co_test <- remove.scrubs.olivier(WFU_Olivier_co_test)
-
-
-# removing erroneous na rows 
-# WFU_Olivier_co_test2 <- lapply(WFU_Olivier_co_test, na.omit)
-# lapply(WFU_Olivier_co_test2, function(df) sapply(df["rfid"], length))
-# get rid of the na columns
+WFU_Olivier_co_test2 <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
 
 # fix first table to account for: no ship date data(DONE)
 # WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]] %>% 
