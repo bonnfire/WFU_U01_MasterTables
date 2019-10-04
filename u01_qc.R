@@ -316,6 +316,9 @@ uniform.var.names.olivier <- function(df){
       names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
                                      c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
                                      c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
+      names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
+                                     c("DateofShipment"), 
+                                     c("ShipmentDate"))
       names(df[[i]]) <- tolower(names(df[[i]]))
       df[[i]]
       })
@@ -341,9 +344,9 @@ WFU_Olivier_co_test <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
 # WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]] %>% 
 #   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
 
-# check for uniform coat color 
-lapply(WFU_Olivier_co_test, function(df)
-  sapply(df["coatcolor"],unique))
+# why do dames and sires switch in [[[7]]]
+# diff bw labanimalid vs labanimalnumber 
+# id is the letter followed by numbers and number should all be number (currently mistranslated)
 
 uniform.coatcolors <- function(df){
   lapply(seq_along(df), function(i) {
@@ -353,12 +356,42 @@ uniform.coatcolors <- function(df){
     df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
     df[[i]]
   })
-} 
+} # function should be used for other cases
 
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
 
+# change date type
+uniform.date.olivier <- function(df){
+  lapply(seq_along(df), function(i){
+    x <- c("dob", "dow", "shipmentdate")
+    df[[i]]$x <- convertToDate(df[[i]]$x)
+    df[[i]]
+  })
+}
+
+uniform.date.olivier <- function(df){
+  lapply(seq_along(df), function(i){
+    df[[i]] <- df[[i]] %>% mutate_at(.vars = vars(dob, dow, shipmentdate),
+                         .funs = convertToDate)
+    df[[i]]
+  })
+}
+
+WFU_Olivier_co_test_2 <- uniform.date.olivier(WFU_Olivier_co_test)
+
+
+uniform.coatcolors <- function(df){
+  lapply(seq_along(df), function(i) {
+    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
+                                      c("BRN", "BLK", "HHOD"), 
+                                      c("BROWN", "BLACK", "HOOD"))
+    df[[i]]
+  })
+} 
+
+
 # rename all sheets 
-names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
+names(WFU_Olivier_co_test_2) <- Olivier_co_sheetnames
 
 ######################
 ## Kalivas(Heroine) ##
