@@ -9,6 +9,65 @@ library(openxlsx)
 library(stringr)
 
 # QC Wake Forest University Shipment 
+
+## all user-defined functions for consistent reformatting ## 
+# ordered by appearance 
+
+u01.importxlsx <- function(xlname){
+  path_sheetnames <- excel_sheets(xlname)
+  df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname)
+  names(df) <- path_sheetnames
+  return(df)
+} 
+
+uniform.var.names.testingu01 <- function(df){
+  lapply(seq_along(df), function(i) {
+    if(grepl("Parent", names(df[[i]])) %>% any()){
+      names(df[[i]])[1:2] <- df[[i]][1,][1:2] %>% as.character()
+      df[[i]] <- df[[i]][-1, ]
+    }
+    names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
+                                   c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
+                                   c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
+    names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
+                                   c("DateofShipment"), 
+                                   c("ShipmentDate"))
+    names(df[[i]]) <- tolower(names(df[[i]]))
+    df[[i]]
+  })
+}
+
+# XX: write code that verifies and sets the correct variable types 
+
+uniform.coatcolors <- function(df){
+  lapply(seq_along(df), function(i) {
+    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
+                                      c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood", "[A|a]lbino"), 
+                                      c("BROWN", "BLACK", "HOOD", "ALBINO"))
+    df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
+    df[[i]]
+  })
+} # function should be used for other cases
+
+
+## all user-defined functions for quality check and validation ## 
+QC <- function(df){
+  lapply(seq_along(df), function(i){
+    dur.wean.summary = list()
+    dur.ship.summary = list()
+    dur.wean.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'D.O.W') %>% 
+      as.duration() %>% summary() 
+    dur.ship.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'Shipment_Date') %>% 
+      as.duration() %>% summary() 
+    list <- list("WeaningAge" = dur.wean.summary[[i]], "ShipmentAge" = dur.ship.summary[[i]])
+    list
+  })
+}
+
+## note: which experiment/lab required a specified function
+
+
+
 ######################
 ####### ALL DF #######
 ######################
@@ -137,19 +196,6 @@ WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][-1, ]
 names(WFU_Mitchell_test) <- Mitchell_sheetnames
 
 # # validate dates 
-QC <- function(df){
-  lapply(seq_along(df), function(i){
-    dur.wean.summary = list()
-    dur.ship.summary = list()
-    dur.wean.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'D.O.W') %>% 
-      as.duration() %>% summary() 
-    dur.ship.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'Shipment_Date') %>% 
-      as.duration() %>% summary() 
-    list <- list("WeaningAge" = dur.wean.summary[[i]], "ShipmentAge" = dur.ship.summary[[i]])
-    list
-    })
-}
-
 QC(WFU_Mitchell_test)
 
 # # check for outliers
@@ -306,25 +352,8 @@ WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9],
                                 x <- x[-1, ]
                                 return(x)})
 # # make variable names consistent
-## XXX figure out the pattern from the original dataset to include in the else if statement
-uniform.var.names.olivier <- function(df){
-  lapply(seq_along(df), function(i) {
-    if(grepl("Parent", names(df[[i]])) %>% any()){
-      names(df[[i]])[1:2] <- c("sires", "dames")
-      df[[i]] <- df[[i]][-1, ]
-      }
-      names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                     c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
-                                     c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
-      names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                     c("DateofShipment"), 
-                                     c("ShipmentDate"))
-      names(df[[i]]) <- tolower(names(df[[i]]))
-      df[[i]]
-      })
-  }
 
-WFU_Olivier_co_test <- uniform.var.names.olivier(WFU_Olivier_co)
+WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
 # # remove all entries after 'scrubs'
 remove.scrubs.and.narowsolivier <- function(df){
@@ -348,47 +377,62 @@ WFU_Olivier_co_test <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
 # diff bw labanimalid vs labanimalnumber 
 # id is the letter followed by numbers and number should all be number (currently mistranslated)
 
-uniform.coatcolors <- function(df){
-  lapply(seq_along(df), function(i) {
-    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
-                                      c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood", "[A|a]lbino"), 
-                                      c("BROWN", "BLACK", "HOOD", "ALBINO"))
-    df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
-    df[[i]]
-  })
-} # function should be used for other cases
-
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
 
 # change date type
-uniform.date.olivier <- function(df){
-  lapply(seq_along(df), function(i){
-    x <- c("dob", "dow", "shipmentdate")
-    df[[i]]$x <- convertToDate(df[[i]]$x)
-    df[[i]]
-  })
-}
-
-uniform.date.olivier <- function(df){
+uniform.date.testingu01<- function(df){
   lapply(seq_along(df), function(i){
     df[[i]] <- df[[i]] %>% mutate_at(.vars = vars(dob, dow, shipmentdate),
                          .funs = convertToDate)
     df[[i]]
   })
-}
+} # currently working but adding numbers to already okay columns
 
-WFU_Olivier_co_test_2 <- uniform.date.olivier(WFU_Olivier_co_test)
-
-
-uniform.coatcolors <- function(df){
-  lapply(seq_along(df), function(i) {
-    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
-                                      c("BRN", "BLK", "HHOD"), 
-                                      c("BROWN", "BLACK", "HOOD"))
+uniform.date.testingu01<- function(df){
+  lapply(seq_along(df), function(i){
+    safe.ifelse <- function(cond, yes, no) structure(ifelse(cond, yes, no), class = class(yes))
+    datecols <- c("dob", "dow", "shipmentdate")
+    df[[i]][, datecols] <- sapply(df[[i]][, datecols], 
+                                 function(col) safe.ifelse(is.POSIXct(df[[i]]$col) == F, 
+                                                      as.POSIXct(as.numeric(df[[i]]$col) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"),
+                                                      df[[i]]$col))
     df[[i]]
-  })
-} 
+    })
+} # not working : Error: Can't subset with `[` using an object of class POSIXct.
 
+WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
+
+safe.ifelse <- function(cond, yes, no) structure(ifelse(cond, yes, no), class = class(yes)) # because ifelse makes factors lose levels and Dates lose their class and only their mode ("numeric") is restored
+# function above is from Hadley
+
+uniform.date.testingu01<- function(df){
+  lapply(seq_along(df), function(i){
+    df[[i]]$dob <- safe.ifelse(is.POSIXct(df[[i]]$dob) == F, as.POSIXct(as.numeric(df[[i]]$dob) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), df[[i]]$dob)
+    df[[i]]$dow <- safe.ifelse(is.POSIXct(df[[i]]$dow) == F, as.POSIXct(as.numeric(df[[i]]$dow) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), df[[i]]$dow)
+    df[[i]]$shipmentdate <- safe.ifelse(is.POSIXct(df[[i]]$shipmentdate) == F, as.POSIXct(as.numeric(df[[i]]$shipmentdate) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), df[[i]]$shipmentdate)
+    return(df[[i]])
+  })
+} # not working : Error: Can't subset with `[` using an object of class POSIXct.
+
+uniform.date.testingu01<- function(df){
+  lapply(seq_along(df), function(i){
+    df[[i]][, col] <- mapply(function(col){
+                                   if(is.POSIXct(df[[i]]$col) == F){
+                                     as.POSIXct(x = as.numeric(df[[i]]$col) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
+                                   }
+                                 }, df[[i]]$dob, df[[i]]$dow, df[[i]]$shipment)
+    return(df[[i]])
+  })
+} # not working : Error: Can't subset with `[` using an object of class POSIXct.
+
+
+# as.POSIXct(as.numeric(WFU_Kalivas_Italy_test[[2]]$dob) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
+
+WFU_Kalivas_Italy_test
+WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
+
+
+WFU_Olivier_co_test_2 <- uniform.date.testingu01(WFU_Olivier_co_test)
 
 # rename all sheets 
 names(WFU_Olivier_co_test_2) <- Olivier_co_sheetnames
@@ -397,18 +441,57 @@ names(WFU_Olivier_co_test_2) <- Olivier_co_sheetnames
 ## Kalivas(Heroine) ##
 ######################
 
-
 # Import XLSX
-u01.importxlsx <- function(xlname){
-  path_sheetnames <- excel_sheets(xlname)
-  df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname)
-  names(df) <- path_sheetnames
-  return(df)
-} 
-
 WFU_Kalivas <- u01.importxlsx("MUSC (Kalivas) Master Shipping.xlsx")
-WFU_Kalivas_test <- uniform.var.names(WFU_Kalivas)
+WFU_Kalivas_updated3 <- u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")
 
+# As per email chain from August and September, the shipment from the third cohort of animals needs to be merged into Kalivas master sheets.
+WFU_Kalivas[[3]] <- WFU_Kalivas_updated3[[1]]
+
+# WFU_Kalivas_test <- uniform.var.names(WFU_Kalivas)
+WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
+
+# variable quality check 
+# # parent pairs
+map(WFU_Kalivas_test, ~ count(., dames, sires, sex) %>%
+                              subset(n!=1 && is.na(dames) == F))
+
+# # number of parent pairs
+unique.values.by.col <- function(df, var){
+  lapply(df, function(df){
+  sapply(df[var], unique)
+  })
+}
+unique.values.by.col(WFU_Kalivas_test, "coatcolor")
+
+unique.values.length.by.col <- function(df, var){
+  lapply(df, function(df){
+    sapply(df[var], function(x){
+      uniquevarcount <- unique(x) %>% length()
+      print(paste("number of unique values (observed count) is", uniquevarcount, "and number of rows (expected count) is", nrow(df)))})
+  })
+}
+unique.values.length.by.col(WFU_Kalivas_test, "accessid") #working 
+
+WFU_Kalivas_test <- uniform.coatcolors(WFU_Kalivas_test)
 lapply(WFU_Kalivas_test, function(df)
   sapply(df["coatcolor"], unique))
 # everything is consistent
+
+######################
+### Kalivas(ITALY) ###
+######################
+WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
+WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
+# WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test) #Error: Can't subset with `[` using an object of class POSIXct.
+lapply(WFU_Kalivas_Italy_test, function(df)
+  sapply(df["coatcolor"], unique)) # Address [[2]] data 
+
+######################
+###### Flagel ########
+######################
+WFU_Flagel <- u01.importxlsx("Flagel Master Shipping Sheet.xlsx")
+WFU_Flagel_test <- uniform.var.names.testingu01(WFU_Flagel)
+# lapply(WFU_Flagel_test, function(df)
+#   sapply(df["coatcolor"], unique))
+WFU_Flagel_test <- uniform.coatcolors(WFU_Flagel_test)
