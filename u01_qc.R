@@ -49,17 +49,27 @@ uniform.coatcolors <- function(df){
   })
 } # function should be used for other cases
 
-uniform.date.testingu01<- function(df){
-  lapply(seq_along(df), function(i){
+uniform.date.testingu01 <- function(df){
+  lapply(seq_along(df), function(i) {
     datecols <- c("dob", "dow", "shipmentdate")
-    safe.ifelse <- function(cond, yes, no) structure(ifelse(cond, yes, no), class = class(yes)) # because ifelse makes factors lose levels and Dates lose their class and only their mode ("numeric") is restored
-    # function above is from Hadley
-    df[[i]] <-  df[[i]] %>%
-      mutate_at(.vars = vars(datecols), 
-                .funs = list(~ safe.ifelse(is.POSIXct(.) == F, as.POSIXct(as.numeric(.) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), .)))
-    df[[i]]
+    datefunction <- function(x){
+      if(is.POSIXct(x) == F){
+        as.POSIXct(as.numeric(x) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
+      }
+    }
+    df[[i]] <- df[[i]] %>% 
+      mutate_at(.vars = vars(datecols), .funs = datefunction)
+    return(df[[i]])
   })
 } # function should be used for other cases (testing)
+
+unique.values.length.by.col <- function(df, var){
+  lapply(df, function(df){
+    sapply(df[var], function(x){
+      uniquevarcount <- unique(x) %>% length()
+      print(paste("for", var, "the number of unique values (observed count) is", uniquevarcount, "and number of rows (expected count) is", nrow(df)))})
+  })
+} # function should be used for identification variables, and for other cases (testing)
 
 ## all user-defined functions for quality check and validation ## 
 QC <- function(df){
@@ -343,10 +353,7 @@ str(WFU_Mitchell_test)
 ## Olivier(Cocaine) ##
 ######################
 # Import XLSX
-Olivier_co_path = "UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx"
-Olivier_co_sheetnames <- excel_sheets(Olivier_co_path)
-WFU_Olivier_co <- lapply(excel_sheets(Olivier_co_path), read_excel, path = Olivier_co_path)
-names(WFU_Olivier_co) <- Olivier_co_sheetnames
+WFU_Olivier_co <- u01.importxlsx("UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx")
 
 # following instructions from Angela Beeson at WFU :
 # "first two were the beginning of my lab managers recording and were done a little different"
@@ -356,6 +363,7 @@ WFU_Olivier_co[2] <- lapply(WFU_Olivier_co[2], separate, col = 'Parent ID\'s', i
 
 # change irregular data types (case by case)
 WFU_Olivier_co[[1]]$`Transponder ID` <- as.character(WFU_Olivier_co[[1]]$`Transponder ID`) # from numeric to character
+
 # set column names without "Cocaine and date" header
 WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9], 
                               function(x){
@@ -363,10 +371,9 @@ WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9],
                                 x <- x[-1, ]
                                 return(x)})
 # # make variable names consistent
-
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
-# # remove all entries after 'scrubs'
+# # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 remove.scrubs.and.narowsolivier <- function(df){
   lapply(seq_along(df), function(i) {
     rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub"))}) %>% which() 
@@ -380,21 +387,22 @@ remove.scrubs.and.narowsolivier <- function(df){
   }
 WFU_Olivier_co_test <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
 
-# fix first table to account for: no ship date data(DONE)
-# WFU_Olivier_co_test[[1]] <- WFU_Olivier_co_test[[1]] %>% 
-#   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
+# change date type
+# placed in this order to prevent excessive nas being introduced by coercion
 
-# why do dames and sires switch in [[[7]]]
-# diff bw labanimalid vs labanimalnumber 
-# id is the letter followed by numbers and number should all be number (currently mistranslated)
+WFU_Olivier_co_test2 <- uniform.date.testingu01(WFU_Olivier_co_test)
 
+# change coat colors
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
 
-# change date type
-WFU_Olivier_co_test_2 <- uniform.date.testingu01(WFU_Olivier_co_test)
-
+lapply(WFU_Olivier_co_test, summary)
 # rename all sheets 
-names(WFU_Olivier_co_test_2) <- Olivier_co_sheetnames
+names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
+
+# Outstanding issues: 
+# between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
+# diff bw labanimalid vs labanimalnumber 
+# id is the letter followed by numbers and number should all be number (currently mistranslated)
 
 ######################
 ## Kalivas(Heroine) ##
@@ -423,21 +431,19 @@ unique.values.by.col <- function(df, var){
 }
 unique.values.by.col(WFU_Kalivas_test, "coatcolor")
 
-unique.values.length.by.col <- function(df, var){
-  lapply(df, function(df){
-    sapply(df[var], function(x){
-      uniquevarcount <- unique(x) %>% length()
-      print(paste("number of unique values (observed count) is", uniquevarcount, "and number of rows (expected count) is", nrow(df)))})
-  })
-}
+apply(WFU_Kalivas_test, unique.values.length.by.col)
 unique.values.length.by.col(WFU_Kalivas_test, "accessid") #working 
 
+# # coat color  
 WFU_Kalivas_test <- uniform.coatcolors(WFU_Kalivas_test)
 lapply(WFU_Kalivas_test, function(df)
   sapply(df["coatcolor"], unique))
 # everything is consistent
 
+# # date columns
 WFU_Kalivas_test <- uniform.date.testingu01(WFU_Kalivas_test)
+
+# # 
 
 ######################
 ### Kalivas(ITALY) ###
