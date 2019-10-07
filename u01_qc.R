@@ -49,6 +49,17 @@ uniform.coatcolors <- function(df){
   })
 } # function should be used for other cases
 
+uniform.date.testingu01<- function(df){
+  lapply(seq_along(df), function(i){
+    datecols <- c("dob", "dow", "shipmentdate")
+    safe.ifelse <- function(cond, yes, no) structure(ifelse(cond, yes, no), class = class(yes)) # because ifelse makes factors lose levels and Dates lose their class and only their mode ("numeric") is restored
+    # function above is from Hadley
+    df[[i]] <-  df[[i]] %>%
+      mutate_at(.vars = vars(datecols), 
+                .funs = list(~ safe.ifelse(is.POSIXct(.) == F, as.POSIXct(as.numeric(.) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), .)))
+    df[[i]]
+  })
+} # function should be used for other cases (testing)
 
 ## all user-defined functions for quality check and validation ## 
 QC <- function(df){
@@ -380,58 +391,6 @@ WFU_Olivier_co_test <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
 
 # change date type
-uniform.date.testingu01<- function(df){
-  lapply(seq_along(df), function(i){
-    df[[i]] <- df[[i]] %>% mutate_at(.vars = vars(dob, dow, shipmentdate),
-                         .funs = convertToDate)
-    df[[i]]
-  })
-} # currently working but adding numbers to already okay columns
-
-uniform.date.testingu01<- function(df){
-  lapply(seq_along(df), function(i){
-    safe.ifelse <- function(cond, yes, no) structure(ifelse(cond, yes, no), class = class(yes))
-    datecols <- c("dob", "dow", "shipmentdate")
-    df[[i]][, datecols] <- sapply(df[[i]][, datecols], 
-                                 function(col) safe.ifelse(is.POSIXct(df[[i]]$col) == F, 
-                                                      as.POSIXct(as.numeric(df[[i]]$col) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"),
-                                                      df[[i]]$col))
-    df[[i]]
-    })
-} # not working : Error: Can't subset with `[` using an object of class POSIXct.
-
-WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
-
-safe.ifelse <- function(cond, yes, no) structure(ifelse(cond, yes, no), class = class(yes)) # because ifelse makes factors lose levels and Dates lose their class and only their mode ("numeric") is restored
-# function above is from Hadley
-
-uniform.date.testingu01<- function(df){
-  lapply(seq_along(df), function(i){
-    df[[i]]$dob <- safe.ifelse(is.POSIXct(df[[i]]$dob) == F, as.POSIXct(as.numeric(df[[i]]$dob) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), df[[i]]$dob)
-    df[[i]]$dow <- safe.ifelse(is.POSIXct(df[[i]]$dow) == F, as.POSIXct(as.numeric(df[[i]]$dow) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), df[[i]]$dow)
-    df[[i]]$shipmentdate <- safe.ifelse(is.POSIXct(df[[i]]$shipmentdate) == F, as.POSIXct(as.numeric(df[[i]]$shipmentdate) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d"), df[[i]]$shipmentdate)
-    return(df[[i]])
-  })
-} # not working : Error: Can't subset with `[` using an object of class POSIXct.
-
-uniform.date.testingu01<- function(df){
-  lapply(seq_along(df), function(i){
-    df[[i]][, col] <- mapply(function(col){
-                                   if(is.POSIXct(df[[i]]$col) == F){
-                                     as.POSIXct(x = as.numeric(df[[i]]$col) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
-                                   }
-                                 }, df[[i]]$dob, df[[i]]$dow, df[[i]]$shipment)
-    return(df[[i]])
-  })
-} # not working : Error: Can't subset with `[` using an object of class POSIXct.
-
-
-# as.POSIXct(as.numeric(WFU_Kalivas_Italy_test[[2]]$dob) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
-
-WFU_Kalivas_Italy_test
-WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
-
-
 WFU_Olivier_co_test_2 <- uniform.date.testingu01(WFU_Olivier_co_test)
 
 # rename all sheets 
@@ -478,6 +437,8 @@ lapply(WFU_Kalivas_test, function(df)
   sapply(df["coatcolor"], unique))
 # everything is consistent
 
+WFU_Kalivas_test <- uniform.date.testingu01(WFU_Kalivas_test)
+
 ######################
 ### Kalivas(ITALY) ###
 ######################
@@ -486,6 +447,8 @@ WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
 # WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test) #Error: Can't subset with `[` using an object of class POSIXct.
 lapply(WFU_Kalivas_Italy_test, function(df)
   sapply(df["coatcolor"], unique)) # Address [[2]] data 
+WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
 
 ######################
 ###### Flagel ########
