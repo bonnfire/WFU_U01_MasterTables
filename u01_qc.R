@@ -1,4 +1,5 @@
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
+rm(list = ls())
 
 # Load libraries
 library(tidyverse) #loads dplyr, tidyr, ggplot2, purrr, etc
@@ -55,7 +56,7 @@ uniform.date.testingu01 <- function(df){
     datefunction <- function(x){
       if(is.POSIXct(x) == F){
         as.POSIXct(as.numeric(x) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
-      }
+      } else x
     }
     df[[i]] <- df[[i]] %>% 
       mutate_at(.vars = vars(datecols), .funs = datefunction)
@@ -71,22 +72,35 @@ unique.values.length.by.col <- function(df, var){
   })
 } # function should be used for identification variables, and for other cases (testing)
 
-## all user-defined functions for quality check and validation ## 
-QC <- function(df){
-  lapply(seq_along(df), function(i){
-    dur.wean.summary = list()
-    dur.ship.summary = list()
-    dur.wean.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'D.O.W') %>% 
-      as.duration() %>% summary() 
-    dur.ship.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'Shipment_Date') %>% 
-      as.duration() %>% summary() 
-    list <- list("WeaningAge" = dur.wean.summary[[i]], "ShipmentAge" = dur.ship.summary[[i]])
-    list
+unique.values.by.col <- function(df, var){
+  lapply(df, function(df){
+    sapply(df[var], unique)
   })
-}
+} # function should be used to view all unique values in a column (like coat color) and for other experiments (testing )
+
+
+## all user-defined functions for quality check and validation ## 
+# QC <- function(df){
+#   lapply(seq_along(df), function(i){
+#     dur.wean.summary = list()
+#     dur.ship.summary = list()
+#     dur.wean.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'D.O.W') %>% 
+#       as.duration() %>% summary() 
+#     dur.ship.summary[[i]] <- interval(df[[i]]$'D.O.B', df[[i]]$'Shipment_Date') %>% 
+#       as.duration() %>% summary() 
+#     list <- list("WeaningAge" = dur.wean.summary[[i]], "ShipmentAge" = dur.ship.summary[[i]])
+#     list
+#   })
+# }
 
 ## note: which experiment/lab required a specified function
-
+# 1. flagel: has misinputted year of shipment in the second sheet
+# 2. kalivas: some sheets have labanimalid and others have labanimalnumber
+# 3. kalivas (italy) : includes age at shipment column that we are omitting and cross checking, doesn't have "labanimalnumber", and addtional rats rows 
+# 4. jhou: doesn't have "labanimalnumber" but there seems to be issue
+# 5. mitchell: doesn't have "labanimalnumber" but the other columns look okay
+# 6. olivier (cocaine): rfid was numeric rather than character and requires removal of scrub cases
+# 7. olivier (oxycodone): requires removal of scrub cases
 
 
 ######################
@@ -95,37 +109,119 @@ QC <- function(df){
 
 
 ######################
+###### Flagel ########
+######################
+WFU_Flagel <- u01.importxlsx("Flagel Master Shipping Sheet.xlsx")
+WFU_Flagel_test <- uniform.var.names.testingu01(WFU_Flagel)
+WFU_Flagel_test <- remove.scrubs.and.narowsolivier(WFU_Flagel_test) # temporarily borrowing olivier scrubs function bc it also removes columns with na and in the first sheet, additional column that notes cost to add per rat in first table
+
+# # checking id vars
+idcols <- c("labanimalnumber", "accessid", "rfid")
+unique.values.length.by.col(WFU_Flagel_test, idcols) ## XX unique.values.length.by.col needs minor tweaking for cleaner output 
+
+# # checking date consistency 
+WFU_Flagel_test2 <- uniform.date.testingu01(WFU_Flagel_test)
+
+# # add age of shipment and check consistency
+WFU_Flagel_test <- lapply(WFU_Flagel_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Flagel_test, function(x) summary(x$shipmentage))
+subset(WFU_Flagel_test[[2]], shipmentage < 0) ## XX include this in Dropbox, notify Apurva and Oksana
+
+# # checking coat color consistency
+WFU_Flagel_test <- uniform.coatcolors(WFU_Flagel_test)
+lapply(WFU_Flagel_test, function(df)
+  sapply(df["coatcolor"], unique))
+
+# # return clean sheet names 
+names(WFU_Flagel_test) <- names(WFU_Flagel)
+
+######################
+### Kalivas(ITALY) ###
+######################
+WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
+WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
+# WFU_Kalivas_Italy_test2 <- remove.scrubs.and.narowsolivier(WFU_Kalivas_Italy_test) ## remove the empty columns and rows, and generalize scrubs to locating italy 
+
+# # checking id vars
+idcols <- c("accessid", "rfid")
+unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) ## XX unique.values.length.by.col needs minor tweaking for cleaner output and rerun when the rows are cleared out 
+## doesn't have labanimalnumber
+
+# # checking date consistency 
+WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
+
+# # add age of shipment and check consistency
+WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
+
+# # checking coat color consistency
+lapply(WFU_Kalivas_Italy_test, function(df)
+  sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
+WFU_Kalivas_Italy_test2 <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+
+######################
+## Kalivas(Heroine) ##
+######################
+WFU_Kalivas <- u01.importxlsx("MUSC (Kalivas) Master Shipping.xlsx")
+WFU_Kalivas_updated3 <- u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")
+# As per email chain from August and September, the shipment from the third cohort of animals needs to be merged into Kalivas master sheets.
+WFU_Kalivas[[3]] <- WFU_Kalivas_updated3[[1]]
+
+WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
+
+# # checking id vars
+idcols <- c("labanimalnumber", "accessid", "rfid")
+unique.values.length.by.col(WFU_Kalivas_test, idcols) ## XX generalize the test so it is able to skip the test if the column doesn't exist
+
+# # checking date consistency 
+WFU_Kalivas_test <- uniform.date.testingu01(WFU_Kalivas_test)
+
+# # add age of shipment and check consistency
+WFU_Kalivas_test <- lapply(WFU_Kalivas_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Kalivas_test, function(x) summary(x$shipmentage))
+
+# # checking coat color consistency
+unique.values.by.col(WFU_Kalivas_test, "coatcolor")
+WFU_Kalivas_test <- uniform.coatcolors(WFU_Kalivas_test)
+
+## XX how do we want to use this data? 
+# # parent pairs
+map(WFU_Kalivas_test, ~ count(., dames, sires, sex) %>%
+      subset(n!=1 && is.na(dames) == F))
+
+# # number of parent pairs
+
+######################
 ######## JHOU ########
 ######################
-# Import XLSX
-Jhou_path = "Jhou Master Shipping Sheet.xlsx"
-Jhou_sheetnames <- excel_sheets(Jhou_path)
-WFU_Jhou <- lapply(excel_sheets(Jhou_path), read_excel, path = Jhou_path)
-names(WFU_Jhou) <- Jhou_sheetnames
+WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 
 # # make within-df variable names consistent and fix sires/dames column name issue
-WFU_Jhou_test <- uniform.var.names(WFU_Jhou)
-'%ni%' <- Negate('%in%')
+WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
-reformat.siredames.cols <- function(df){
-  lapply(seq_along(df), function(i){
-    if("Sires" %ni% names(df[[i]])){
-      names(df[[i]])[1:2] <- df[[i]][1,1:2] %>% as.character()
-      df[[i]] <- df[[i]][-1, ]
-      df[[i]]
-    } else{
-     df[[i]] 
-    }
-    })
-}
-WFU_Jhou_test <- reformat.siredames.cols(WFU_Jhou_test)
-names(WFU_Jhou_test) <- names(WFU_Jhou) # df names = shipping dates 
+###  add Shipment Date into Jhou data *** EXPERIMENTER SPECIFIC *** 
+WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = ymd("2018-07-05"))
 
-# # validate date 
-### add Shipment Date into Jhou data
-WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("Shipment_Date" = ymd("2018-08-05"))
-QC(WFU_Jhou_test)
+# # checking id vars
+idcols <- c("accessid", "rfid")
+unique.values.length.by.col(WFU_Jhou_test, idcols) # XX the first sheet is expecting 23 rows but we only see 17
+
+# # checking date consistency 
+WFU_Jhou_test2 <- uniform.date.testingu01(WFU_Jhou_test)
+
+# # add age of shipment and check consistency
+WFU_Jhou_test2 <- lapply(WFU_Jhou_test2, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Jhou_test2, function(x) summary(x$shipmentage)) ## XX [[2]] is very off
+
+# # checking coat color consistency
+unique.values.by.col(WFU_Jhou_test, "coatcolor")
+WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
+
+names(WFU_Jhou_test) <- names(WFU_Jhou)
+
 ## XX INCOMPLETE [PICK UP]
+# # validate date 
+QC(WFU_Jhou_test)
 
 # # automate the counts with purrr:map() 
 # # itirate through all designated columns in a list of df's
@@ -191,31 +287,32 @@ map(WFU_Jhou_test, ~ subset(., Dames==Sires))
 ######################
 ######## MITCHELL ####
 ######################
-# Import XLSX
-Mitchell_path = "Mitchell Master Shipping Sheet.xlsx"
-Mitchell_sheetnames <- excel_sheets(Mitchell_path)
-WFU_Mitchell <- lapply(excel_sheets(Mitchell_path), read_excel, path = Mitchell_path)
-names(WFU_Mitchell) <- Mitchell_sheetnames
-# # make variable names consistent
-uniform.var.names<- function(df){
-  lapply(seq_along(df), function(i) {
-    names(df[[i]]) <- mgsub::mgsub(names(df[[i]]), 
-                                   c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"), 
-                                   c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
-    names(df[[i]]) <- tolower(names(df[[i]]))
-    df[[i]]
-    })
-} 
+WFU_Mitchell <- u01.importxlsx("Mitchell Master Shipping Sheet.xlsx")
+WFU_Mitchell_test <- uniform.var.names.testingu01(WFU_Mitchell)
 
-WFU_Mitchell_test <- uniform.var.names(WFU_Mitchell)
 # fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (XX waiting for feedback)
 WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]] %>% 
   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
-names(WFU_Mitchell_test[[1]])[1:2] <- WFU_Mitchell_test[[1]][1,1:2] %>% as.character() %>% tolower()
-WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][-1, ]
-# rename all sheets 
-names(WFU_Mitchell_test) <- Mitchell_sheetnames
 
+# # checking id vars
+idcols <- c("labanimalnumber", "accessid", "rfid")
+unique.values.length.by.col(WFU_Mitchell_test, idcols) ## XX generalize the test so it is able to skip the test if the column doesn't exist
+
+# # checking date consistency 
+WFU_Mitchell_test <- uniform.date.testingu01(WFU_Mitchell_test)
+
+# # add age of shipment and check consistency
+WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage))
+
+# # checking coat color consistency
+unique.values.by.col(WFU_Mitchell_test, "coatcolor")
+WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
+
+# return original names of all sheets 
+names(WFU_Mitchell_test) <- names(WFU_Mitchell) 
+
+## XX INCOMPLETE  
 # # validate dates 
 QC(WFU_Mitchell_test)
 
@@ -352,7 +449,6 @@ str(WFU_Mitchell_test)
 ######################
 ## Olivier(Cocaine) ##
 ######################
-# Import XLSX
 WFU_Olivier_co <- u01.importxlsx("UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx")
 
 # following instructions from Angela Beeson at WFU :
@@ -405,62 +501,8 @@ names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
 # id is the letter followed by numbers and number should all be number (currently mistranslated)
 
 ######################
-## Kalivas(Heroine) ##
+# Olivier(Oxycodone) #
 ######################
+WFU_Olivier_ox <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
+WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox) # XX remove first row of all tables
 
-# Import XLSX
-WFU_Kalivas <- u01.importxlsx("MUSC (Kalivas) Master Shipping.xlsx")
-WFU_Kalivas_updated3 <- u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")
-
-# As per email chain from August and September, the shipment from the third cohort of animals needs to be merged into Kalivas master sheets.
-WFU_Kalivas[[3]] <- WFU_Kalivas_updated3[[1]]
-
-# WFU_Kalivas_test <- uniform.var.names(WFU_Kalivas)
-WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
-
-# variable quality check 
-# # parent pairs
-map(WFU_Kalivas_test, ~ count(., dames, sires, sex) %>%
-                              subset(n!=1 && is.na(dames) == F))
-
-# # number of parent pairs
-unique.values.by.col <- function(df, var){
-  lapply(df, function(df){
-  sapply(df[var], unique)
-  })
-}
-unique.values.by.col(WFU_Kalivas_test, "coatcolor")
-
-apply(WFU_Kalivas_test, unique.values.length.by.col)
-unique.values.length.by.col(WFU_Kalivas_test, "accessid") #working 
-
-# # coat color  
-WFU_Kalivas_test <- uniform.coatcolors(WFU_Kalivas_test)
-lapply(WFU_Kalivas_test, function(df)
-  sapply(df["coatcolor"], unique))
-# everything is consistent
-
-# # date columns
-WFU_Kalivas_test <- uniform.date.testingu01(WFU_Kalivas_test)
-
-# # 
-
-######################
-### Kalivas(ITALY) ###
-######################
-WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
-WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
-# WFU_Kalivas_Italy_test2 <- uniform.date.testingu01(WFU_Kalivas_Italy_test) #Error: Can't subset with `[` using an object of class POSIXct.
-lapply(WFU_Kalivas_Italy_test, function(df)
-  sapply(df["coatcolor"], unique)) # Address [[2]] data 
-WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
-WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
-
-######################
-###### Flagel ########
-######################
-WFU_Flagel <- u01.importxlsx("Flagel Master Shipping Sheet.xlsx")
-WFU_Flagel_test <- uniform.var.names.testingu01(WFU_Flagel)
-# lapply(WFU_Flagel_test, function(df)
-#   sapply(df["coatcolor"], unique))
-WFU_Flagel_test <- uniform.coatcolors(WFU_Flagel_test)
