@@ -31,8 +31,8 @@ uniform.var.names.testingu01 <- function(df){
                                    c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
                                    c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                   c("DateofShipment"), 
-                                   c("ShipmentDate"))
+                                   c("DateofShipment", "LabAnimalID"), 
+                                   c("ShipmentDate", "LabAnimalNumber"))
     names(df[[i]]) <- tolower(names(df[[i]]))
     df[[i]]
   })
@@ -66,10 +66,9 @@ uniform.date.testingu01 <- function(df){
 
 unique.values.length.by.col <- function(df, var){
   lapply(df, function(df){
-    sapply(df[var], function(x){
-      uniquevarcount <- unique(x) %>% length()
+    uniquevarcount <- sapply(df[var], function(x){
+      unique(x) %>% length()})
       print(paste("for", var, "the number of unique values (observed count) is", uniquevarcount, "and number of rows (expected count) is", nrow(df)))})
-  })
 } # function should be used for identification variables, and for other cases (testing)
 
 unique.values.by.col <- function(df, var){
@@ -140,12 +139,31 @@ names(WFU_Flagel_test) <- names(WFU_Flagel)
 ######################
 WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
 WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
-# WFU_Kalivas_Italy_test2 <- remove.scrubs.and.narowsolivier(WFU_Kalivas_Italy_test) ## remove the empty columns and rows, and generalize scrubs to locating italy 
+
+# add comment section (esp for delayed shipping day)
+WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
+WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
+  mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)")
+WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]] %>%
+  mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)")
+# add resolution section 
+ WFU_Kalivas_Italy_test2 <- remove.scrubs.and.narowsolivier(WFU_Kalivas_Italy_test) ## remove the empty columns and rows, and generalize scrubs to locating italy 
+
+# experiment specific: second cohort requires remove additional 15 rats sent to italy note because they are pilot rats 
+# get row number for which italy is shown and then remove all rows after that 
+removerowfromhere <- which(as.matrix(WFU_Kalivas_Italy_test[[2]])=='ITALY EXTRA 15 RATS', arr.ind=TRUE)[1] # row number is [1]
+WFU_Kalivas_Italy_test[[2]] <- WFU_Kalivas_Italy_test[[2]][-(removerowfromhere:nrow(WFU_Kalivas_Italy_test[[2]])),]
+removeallnarow <- function(df){
+  ind <- apply(df, 1, function(x) all(is.na(x)))
+  df <- df[ !ind, ]
+} # remove rows with all na
+WFU_Kalivas_Italy_test[[2]] <- removeallnarow(WFU_Kalivas_Italy_test[[2]])
 
 # # checking id vars
 idcols <- c("accessid", "rfid")
-unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) ## XX unique.values.length.by.col needs minor tweaking for cleaner output and rerun when the rows are cleared out 
+unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
 ## doesn't have labanimalnumber
+WFU_Kalivas_Italy_test
 
 # # checking date consistency 
 WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
@@ -158,6 +176,7 @@ lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
 lapply(WFU_Kalivas_Italy_test, function(df)
   sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
 WFU_Kalivas_Italy_test2 <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+
 
 ######################
 ## Kalivas(Heroine) ##
@@ -200,7 +219,8 @@ WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
 ###  add Shipment Date into Jhou data *** EXPERIMENTER SPECIFIC *** 
-WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = ymd("2018-07-05"))
+WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = as.POSIXct("2018-07-05", format="%Y-%m-%d"))
+# WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = ymd("2018-07-05"))
 
 # # checking id vars
 idcols <- c("accessid", "rfid")
@@ -216,8 +236,10 @@ lapply(WFU_Jhou_test2, function(x) summary(x$shipmentage)) ## XX [[2]] is very o
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
 WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
-
 names(WFU_Jhou_test) <- names(WFU_Jhou)
+
+WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort")
+
 
 ## XX INCOMPLETE [PICK UP]
 # # validate date 
@@ -470,18 +492,9 @@ WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9],
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
-remove.scrubs.and.narowsolivier <- function(df){
-  lapply(seq_along(df), function(i) {
-    rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub"))}) %>% which() 
-    if(is.integer(rownumber) && length(rownumber) != 0){
-      df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
-    }
-    df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
-    df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
-    return(df[[i]])
-    })
-  }
-WFU_Olivier_co_test <- remove.scrubs.and.narowsolivier(WFU_Olivier_co_test)
+# see remove.scrubs.and.narows documentation
+
+WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test)
 
 # change date type
 # placed in this order to prevent excessive nas being introduced by coercion
