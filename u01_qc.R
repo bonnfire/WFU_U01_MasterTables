@@ -28,8 +28,8 @@ uniform.var.names.testingu01 <- function(df){
       df[[i]] <- df[[i]][-1, ]
     }
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                   c(" |\\.", "#", "Transponder ", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
-                                   c("", "Number", "RF", "DOW","LabAnimal", "Shipment"))
+                                   c(" |\\.", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
+                                   c("", "Number", "RFID", "DOW","LabAnimal", "Shipment"))
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
                                    c("DateofShipment", "LabAnimalID"), 
                                    c("ShipmentDate", "LabAnimalNumber"))
@@ -77,6 +77,17 @@ unique.values.by.col <- function(df, var){
   })
 } # function should be used to view all unique values in a column (like coat color) and for other experiments (testing )
 
+remove.scrubs.and.narows <- function(df){
+  lapply(seq_along(df), function(i) {
+    rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which() 
+    if(is.integer(rownumber) && length(rownumber) != 0){
+      df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
+    }
+    df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
+    df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
+    return(df[[i]])
+  })
+}
 
 ## all user-defined functions for quality check and validation ## 
 # QC <- function(df){
@@ -94,12 +105,12 @@ unique.values.by.col <- function(df, var){
 
 ## note: which experiment/lab required a specified function
 # 1. flagel: has misinputted year of shipment in the second sheet
-# 2. kalivas: some sheets have labanimalid and others have labanimalnumber
-# 3. kalivas (italy) : includes age at shipment column that we are omitting and cross checking, doesn't have "labanimalnumber", and addtional rats rows 
-# 4. jhou: doesn't have "labanimalnumber" but there seems to be issue
-# 5. mitchell: doesn't have "labanimalnumber" but the other columns look okay
-# 6. olivier (cocaine): rfid was numeric rather than character and requires removal of scrub cases
-# 7. olivier (oxycodone): requires removal of scrub cases
+# 2. kalivas: some sheets have labanimalid and others have labanimalnumber (FIXED ALL)
+# 3. kalivas (italy) : includes age at shipment column that we are omitting and cross checking, doesn't have "labanimalnumber", and addtional rats rows (FIXED ALL)
+# 4. jhou: doesn't have "labanimalnumber" but there seems to be issue (FIXED)
+# 5. mitchell: FIRST TABLE NEEDS A LOT OF WORK
+# 6. olivier (cocaine): rfid was numeric rather than character (FIXED) and requires removal of scrub cases (FIXED) and FIRST TABLE NEEDS A LOT OF WORK
+# 7. olivier (oxycodone): requires removal of scrub cases PICK UP FROM HERE
 
 
 ######################
@@ -142,17 +153,17 @@ WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
 
 # add comment section (esp for delayed shipping day)
 WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
+WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]][-c(41:nrow(WFU_Kalivas_Italy_test[[1]])),]
 WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
   mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)")
+WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]][-c(41:nrow(WFU_Kalivas_Italy_test[[3]])), -c(16:19)] # XX remove three empty columns, age@ship, and bottom rows 
 WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]] %>%
-  mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)")
-# add resolution section 
- WFU_Kalivas_Italy_test2 <- remove.scrubs.and.narowsolivier(WFU_Kalivas_Italy_test) ## remove the empty columns and rows, and generalize scrubs to locating italy 
+  mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
 
+# add resolution section XX can I assume that these are ignorable??? 
+ 
 # experiment specific: second cohort requires remove additional 15 rats sent to italy note because they are pilot rats 
-# get row number for which italy is shown and then remove all rows after that 
-removerowfromhere <- which(as.matrix(WFU_Kalivas_Italy_test[[2]])=='ITALY EXTRA 15 RATS', arr.ind=TRUE)[1] # row number is [1]
-WFU_Kalivas_Italy_test[[2]] <- WFU_Kalivas_Italy_test[[2]][-(removerowfromhere:nrow(WFU_Kalivas_Italy_test[[2]])),]
+WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
 removeallnarow <- function(df){
   ind <- apply(df, 1, function(x) all(is.na(x)))
   df <- df[ !ind, ]
@@ -175,7 +186,7 @@ lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
 # # checking coat color consistency
 lapply(WFU_Kalivas_Italy_test, function(df)
   sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
-WFU_Kalivas_Italy_test2 <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
 
 
 ######################
@@ -218,27 +229,31 @@ WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
+# experiment/table specific: remove empty columns 16-18
+WFU_Jhou_test[[1]] <- WFU_Jhou_test[[1]][, -c(16:18)]
+WFU_Jhou_test <- lapply(WFU_Jhou_test, janitor::remove_empty, which = "rows")
+
 ###  add Shipment Date into Jhou data *** EXPERIMENTER SPECIFIC *** 
 WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = as.POSIXct("2018-07-05", format="%Y-%m-%d"))
 # WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = ymd("2018-07-05"))
 
 # # checking id vars
 idcols <- c("accessid", "rfid")
-unique.values.length.by.col(WFU_Jhou_test, idcols) # XX the first sheet is expecting 23 rows but we only see 17
+unique.values.length.by.col(WFU_Jhou_test, idcols) 
 
 # # checking date consistency 
 WFU_Jhou_test2 <- uniform.date.testingu01(WFU_Jhou_test)
 
 # # add age of shipment and check consistency
 WFU_Jhou_test2 <- lapply(WFU_Jhou_test2, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Jhou_test2, function(x) summary(x$shipmentage)) ## XX [[2]] is very off
+lapply(WFU_Jhou_test2, function(x) summary(x$shipmentage))
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
 WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
 names(WFU_Jhou_test) <- names(WFU_Jhou)
 
-WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort")
+WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
 
 
 ## XX INCOMPLETE [PICK UP]
