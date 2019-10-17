@@ -79,13 +79,18 @@ unique.values.by.col <- function(df, var){
 
 remove.scrubs.and.narows <- function(df){
   lapply(seq_along(df), function(i) {
-    rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which() 
-    if(is.integer(rownumber) && length(rownumber) != 0){
+    # rownumber <- apply(df[[i]], MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
+    # if(is.integer(rownumber) && length(rownumber) != 0){
+    #   df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
+    # }
+    rownumber <- which(is.na(df[[i]]$rfid))[1]
+    if(is.na(rownumber) == F){
       df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
     }
-    df[[i]] <- df[[i]][- which(is.na(WFU_Olivier_ox_test[[5]]$rfid)) ,]
-    df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
-    df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
+    
+    # df[[i]] <- ifelse(which(is.na(df[[i]]$rfid))[1] > 1, df[[i]][- c(which(is.na(df[[i]]$rfid))[1] : nrow(df[[i]])), ],  df[[i]])
+    # df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
+    # df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
     return(df[[i]])
   })
 }
@@ -111,7 +116,7 @@ remove.scrubs.and.narows <- function(df){
 # 4. jhou: doesn't have "labanimalnumber" but there seems to be issue (FIXED)
 # 5. mitchell: FIRST TABLE NEEDS A LOT OF WORK
 # 6. olivier (cocaine): rfid was numeric rather than character (FIXED) and requires removal of scrub cases (FIXED) and FIRST TABLE NEEDS A LOT OF WORK
-# 7. olivier (oxycodone): requires removal of scrub cases PICK UP FROM HERE
+# 7. olivier (oxycodone): requires removal of scrub cases, added shipment dates (sheet 2), extracted box info, removed trailing date  (FIXED ALL)
 
 
 ######################
@@ -504,17 +509,21 @@ WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9],
                                 names(x) <- x[1,] %>% as.character()
                                 x <- x[-1, ]
                                 return(x)})
+
+# clean first table to prevent code from confusing the dup shipment date columns
+which(names(WFU_Olivier_co[[1]])== "Cage Pair")
+WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))]
+
 # # make variable names consistent
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
 
-WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test)
+WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test) # XX changed the function, test if more efficient 
 
 # change date type
 # placed in this order to prevent excessive nas being introduced by coercion
-
 WFU_Olivier_co_test2 <- uniform.date.testingu01(WFU_Olivier_co_test)
 
 # change coat colors
@@ -553,6 +562,9 @@ WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x){
   x$shipmentbox <- stringr::str_extract(x$shipmentbox, "\\d+")
   return(x)
 })
+
+# check id values 
+unique.values.length.by.col(WFU_Olivier_ox_test, idcols)
 
 # change coat colors
 WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
