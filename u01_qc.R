@@ -28,8 +28,8 @@ uniform.var.names.testingu01 <- function(df){
       df[[i]] <- df[[i]][-1, ]
     }
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                   c(" |\\.", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship"),
-                                   c("", "Number", "RFID", "DOW","LabAnimal", "Shipment"))
+                                   c(" |\\.", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                                   c("", "Number", "RFID", "DOW","LabAnimal", "Shipment", "Dames"))
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
                                    c("DateofShipment", "LabAnimalID"), 
                                    c("ShipmentDate", "LabAnimalNumber"))
@@ -83,6 +83,7 @@ remove.scrubs.and.narows <- function(df){
     if(is.integer(rownumber) && length(rownumber) != 0){
       df[[i]] <- df[[i]][-(rownumber:nrow(df[[i]])),]
     }
+    df[[i]] <- df[[i]][- which(is.na(WFU_Olivier_ox_test[[5]]$rfid)) ,]
     df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
     df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
     return(df[[i]])
@@ -532,5 +533,34 @@ names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
 # Olivier(Oxycodone) #
 ######################
 WFU_Olivier_ox <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
-WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox) # XX remove first row of all tables
+WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox, function(x){
+  names(x) <- x[1, ] %>% as.character
+  x <- x[-1, ]
+}) # remove first row of all tables prep for uniform variable name fxn
+WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox_test)
+
+# # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
+# see remove.scrubs.and.narows documentation
+WFU_Olivier_ox_test <- remove.scrubs.and.narows(WFU_Olivier_ox_test) # remove rows that don't have rfid to include the trailing date case in sheet 5
+
+# change date type
+WFU_Olivier_ox_test[[2]]$shipmentdate <- as.POSIXct("2018-09-11", tz = "UTC") # must add shipment date to sheet 2 
+WFU_Olivier_ox_test <- uniform.date.testingu01(WFU_Olivier_ox_test)
+
+# make shipment box uniform ** EXPERIMENTER SPECIFIC **
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x){
+  x$shipmentbox <- stringr::str_extract(x$shipmentbox, "\\d+")
+  return(x)
+})
+
+# change coat colors
+WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
+
+# validate age
+WFU_Olivier_ox_test2 <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Olivier_ox_test2, function(x) summary(x$shipmentage)) #all seem okay; slightly older cohort 2  
+
+# rename all sheets 
+names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
 
