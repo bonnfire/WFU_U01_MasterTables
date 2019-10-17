@@ -114,7 +114,7 @@ remove.scrubs.and.narows <- function(df){
 # 2. kalivas: some sheets have labanimalid and others have labanimalnumber (FIXED ALL)
 # 3. kalivas (italy) : includes age at shipment column that we are omitting and cross checking, doesn't have "labanimalnumber", and addtional rats rows (FIXED ALL)
 # 4. jhou: doesn't have "labanimalnumber" but there seems to be issue (FIXED)
-# 5. mitchell: FIRST TABLE NEEDS A LOT OF WORK
+# 5. mitchell: first table labanimalnumber looks like TJ001 vs second and third tables MIT101 (noted 10/17) no action until necessary, needed to add first table shipping date
 # 6. olivier (cocaine): rfid was numeric rather than character (FIXED) and requires removal of scrub cases (FIXED) and FIRST TABLE NEEDS A LOT OF WORK
 # 7. olivier (oxycodone): requires removal of scrub cases, added shipment dates (sheet 2), extracted box info, removed trailing date  (FIXED ALL)
 
@@ -333,24 +333,38 @@ map(WFU_Jhou_test, ~ subset(., Dames==Sires))
 WFU_Mitchell <- u01.importxlsx("Mitchell Master Shipping Sheet.xlsx")
 WFU_Mitchell_test <- uniform.var.names.testingu01(WFU_Mitchell)
 
-# fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (XX waiting for feedback)
+# fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (add comment that the highlighted should be excluded)
+pregnant <- WFU_Mitchell_test[[1]] %>% 
+  filter(is.na(`15`)==F) %>% 
+  select(rfid) %>% 
+  unlist %>% 
+  as.vector # extract the pregnant cases to include as comment
+
+WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][ , colSums(is.na(WFU_Mitchell_test[[1]])) == 0] # remove columns with any na's, checked for no na rows 
+
 WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]] %>% 
   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
 
+# add comment and resolution columns **EXPERIMENTER SPECIFIC** 
+WFU_Mitchell_test <- lapply(WFU_Mitchell_test, cbind, comment = NA, resolution = NA) ## XX PICK UP FROM HERE
+WFU_Mitchell_test[[1]]$comment <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "Pregnant female", NA)
+WFU_Mitchell_test[[1]]$resolution <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "REMOVE_FROM_EXCLUSION_AND_REPLACE", NA)
+
 # # checking id vars
 idcols <- c("labanimalnumber", "accessid", "rfid")
-unique.values.length.by.col(WFU_Mitchell_test, idcols) ## XX generalize the test so it is able to skip the test if the column doesn't exist
+unique.values.length.by.col(WFU_Mitchell_test, idcols)
 
 # # checking date consistency 
 WFU_Mitchell_test <- uniform.date.testingu01(WFU_Mitchell_test)
 
 # # add age of shipment and check consistency
-WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage))
+WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
+lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
 
 # # checking coat color consistency
-unique.values.by.col(WFU_Mitchell_test, "coatcolor")
+# before unique.values.by.col(WFU_Mitchell_test, "coatcolor")
 WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
+# after unique.values.by.col(WFU_Mitchell_test, "coatcolor")
 
 # return original names of all sheets 
 names(WFU_Mitchell_test) <- names(WFU_Mitchell) 
