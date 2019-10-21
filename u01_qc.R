@@ -114,7 +114,7 @@ remove.scrubs.and.narows <- function(df){
 # 2. kalivas: some sheets have labanimalid and others have labanimalnumber (FIXED ALL)
 # 3. kalivas (italy) : includes age at shipment column that we are omitting and cross checking, doesn't have "labanimalnumber", and addtional rats rows (FIXED ALL)
 # 4. jhou: doesn't have "labanimalnumber" but there seems to be issue (FIXED)
-# 5. mitchell: first table labanimalnumber looks like TJ001 vs second and third tables MIT101 (noted 10/17) no action until necessary, needed to add first table shipping date
+# 5. mitchell: first table labanimalnumber looks like TJ001 vs second and third tables MIT101 (noted 10/17) no action until necessary, needed to add first table shipping date, added the pregnant cases to the first table (FIXED)
 # 6. olivier (cocaine): rfid was numeric rather than character (FIXED) and requires removal of scrub cases (FIXED) and FIRST TABLE NEEDS A LOT OF WORK
 # 7. olivier (oxycodone): requires removal of scrub cases, added shipment dates (sheet 2), extracted box info, removed trailing date  (FIXED ALL)
 
