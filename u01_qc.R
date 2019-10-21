@@ -46,6 +46,7 @@ uniform.coatcolors <- function(df){
                                       c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood", "[A|a]lbino"), 
                                       c("BROWN", "BLACK", "HOOD", "ALBINO"))
     df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
+    df[[i]]$coatcolor <- toupper(df[[i]]$coatcolor)
     df[[i]]
   })
 } # function should be used for other cases
@@ -193,7 +194,9 @@ lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
 lapply(WFU_Kalivas_Italy_test, function(df)
   sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
 WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+names(WFU_Kalivas_Italy_test) <- names(WFU_Kalivas_Italy)
 
+WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fill = T)
 
 ######################
 ## Kalivas(Heroine) ##
@@ -220,6 +223,11 @@ lapply(WFU_Kalivas_test, function(x) summary(x$shipmentage))
 unique.values.by.col(WFU_Kalivas_test, "coatcolor")
 WFU_Kalivas_test <- uniform.coatcolors(WFU_Kalivas_test)
 
+names(WFU_Kalivas_test) <- names(WFU_Kalivas)
+
+WFU_Kalivas_test_df <- rbindlist(WFU_Kalivas_test, id = "cohort", fill = T)
+
+
 ## XX how do we want to use this data? 
 # # parent pairs
 map(WFU_Kalivas_test, ~ count(., dames, sires, sex) %>%
@@ -236,11 +244,11 @@ WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
 # experiment/table specific: remove empty columns 16-18
-WFU_Jhou_test[[1]] <- WFU_Jhou_test[[1]][, -c(16:18)]
+WFU_Jhou_test[[1]] <- WFU_Jhou_test[[1]][, -c(16:18), drop = F] # drop = F retains data type
 WFU_Jhou_test <- lapply(WFU_Jhou_test, janitor::remove_empty, which = "rows")
 
 ###  add Shipment Date into Jhou data *** EXPERIMENTER SPECIFIC *** 
-WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = as.POSIXct("2018-07-05", format="%Y-%m-%d"))
+WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = as.POSIXct("2018-07-05", format="%Y-%m-%d", tz = "UTC"))
 # WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = ymd("2018-07-05"))
 
 # # checking id vars
@@ -248,11 +256,11 @@ idcols <- c("accessid", "rfid")
 unique.values.length.by.col(WFU_Jhou_test, idcols) 
 
 # # checking date consistency 
-WFU_Jhou_test2 <- uniform.date.testingu01(WFU_Jhou_test)
+WFU_Jhou_test <- uniform.date.testingu01(WFU_Jhou_test)
 
 # # add age of shipment and check consistency
-WFU_Jhou_test2 <- lapply(WFU_Jhou_test2, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Jhou_test2, function(x) summary(x$shipmentage))
+WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Jhou_test, function(x) summary(x$shipmentage))
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
@@ -368,6 +376,8 @@ WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
 
 # return original names of all sheets 
 names(WFU_Mitchell_test) <- names(WFU_Mitchell) 
+
+WFU_Mitchell_test_df <- rbindlist(WFU_Mitchell_test, id = "cohort", fill = T)
 
 ## XX INCOMPLETE  
 # # validate dates 
@@ -516,6 +526,9 @@ WFU_Olivier_co[2] <- lapply(WFU_Olivier_co[2], separate, col = 'Parent ID\'s', i
 
 # change irregular data types (case by case)
 WFU_Olivier_co[[1]]$`Transponder ID` <- as.character(WFU_Olivier_co[[1]]$`Transponder ID`) # from numeric to character
+WFU_Olivier_co[[3]]$`Animal #` <- as.character(WFU_Olivier_co[[3]]$`Animal #`)
+WFU_Olivier_co[[4]]$`Animal #` <- as.character(WFU_Olivier_co[[4]]$`Animal #`)
+
 
 # set column names without "Cocaine and date" header
 WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9], 
@@ -525,8 +538,7 @@ WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9],
                                 return(x)})
 
 # clean first table to prevent code from confusing the dup shipment date columns
-which(names(WFU_Olivier_co[[1]])== "Cage Pair")
-WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))]
+WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))] # column 16 to end 
 
 # # make variable names consistent
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
@@ -543,9 +555,19 @@ WFU_Olivier_co_test2 <- uniform.date.testingu01(WFU_Olivier_co_test)
 # change coat colors
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
 
-lapply(WFU_Olivier_co_test, summary)
+lapply(WFU_Olivier_co_test, str)
+
+# # checking date consistency 
+WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
+
+# # add age of shipment and check consistency
+WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
+lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
+
 # rename all sheets 
-names(WFU_Olivier_co_test) <- Olivier_co_sheetnames
+names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
+
+WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T)
 
 # Outstanding issues: 
 # between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
@@ -561,6 +583,8 @@ WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox, function(x){
   names(x) <- x[1, ] %>% as.character
   x <- x[-1, ]
 }) # remove first row of all tables prep for uniform variable name fxn
+
+WFU_Olivier_ox_test[[1]] <- WFU_Olivier_ox_test[[1]][, -c(16:18), drop = F]
 WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox_test)
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
@@ -584,9 +608,10 @@ unique.values.length.by.col(WFU_Olivier_ox_test, idcols)
 WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
 
 # validate age
-WFU_Olivier_ox_test2 <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Olivier_ox_test2, function(x) summary(x$shipmentage)) #all seem okay; slightly older cohort 2  
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_Olivier_ox_test, function(x) summary(x$shipmentage)) #all seem okay; slightly older cohort 2  
 
 # rename all sheets 
 names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
 
+WFU_Olivier_ox_test_df <- rbindlist(WFU_Olivier_ox_test, id = "cohort", fill = T)
