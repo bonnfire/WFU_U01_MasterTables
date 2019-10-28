@@ -262,6 +262,10 @@ WFU_Jhou_test <- uniform.date.testingu01(WFU_Jhou_test)
 WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Jhou_test, function(x) summary(x$shipmentage))
 
+# # add age of shipment and check consistency
+WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Jhou_test, function(x) summary(x$weanage))
+
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
 WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
