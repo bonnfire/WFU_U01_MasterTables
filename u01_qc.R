@@ -177,6 +177,15 @@ WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]] %>%
 
 # add resolution section XX can I assume that these are ignorable??? 
  
+
+# create the naive dataset before removing it and clean up naive dataset 
+WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
+  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
+  if(length(rownumber) != 0){
+    subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
+  } else NULL
+})
+  
 # experiment specific: second cohort requires remove additional 15 rats sent to italy note because they are pilot rats 
 WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
 removeallnarow <- function(df){
@@ -197,8 +206,6 @@ WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
 # # add age of shipment and check consistency
 WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
-
-
 
 # # checking the number of rfid digits 
 
