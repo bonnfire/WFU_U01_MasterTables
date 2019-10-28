@@ -48,19 +48,32 @@ for(i in seq(1, ncol(olivier_spleen_raw), 2)){
   olivier_spleen_list[[j]] <- olivier_spleen_raw[, (i:k)]
 }
 
-# remove na rows
-olivier_spleen_list_split <- lapply(olivier_spleen_list, function(df){
-  df <- df %>% 
-    filter(!grepl("^(?!\\d)", rfid, perl = T)) %>% 
-    na.omit(rfid) 
-return(df)
-})
-olivier_spleen_list_split[[10]] <- NULL
-
 # add cohort information
 for(i in 1:9){
-    olivier_spleen_list_split[[i]]$cohort = as.character(olivier_spleen_list[[10]][i,2])
+  olivier_spleen_list[[i]]$cohort = as.character(olivier_spleen_list[[10]][i,2])
 } # replacement has 40 rows, data has 39 so it has to be outside the lapply function
+olivier_spleen_list[[10]] <- NULL
 
-olivier_spleen_list_df <- rbindlist(olivier_spleen_list_split)
-  
+# remove na rows and split the cohort into two
+olivier_spleen_list_df <- lapply(olivier_spleen_list, function(df){
+  df <- df %>% 
+    filter(!grepl("^(?!\\d)", rfid, perl = T)) %>% 
+    na.omit(rfid) %>%
+    separate(col = cohort, into = c("cohort", "experiment"), sep = " (?=[^ ]+$)") %>% 
+    mutate(sex = substring(labanimalid, 1, 1))
+return(df)
+}) %>% rbindlist()
+
+# QC: 
+# number of counts as the raw files: all numbers match cohorts 1:8 for cocaine, no cohort 6, and only 3 and 4 for oxy
+##  olivier_spleen_list_df %>% group_by(cohort, experiment) %>% count
+
+# sex count ## bring this to apurva's attention
+olivier_spleen_sex <- olivier_spleen_list_df %>% group_by(cohort, experiment, sex) %>% summarize(sexcount = n())
+ggplot(olivier_spleen_list_df, aes(x = sex, fill = sex)) + 
+  geom_histogram(stat = "count") + 
+  facet_wrap(~cohort + experiment) + 
+  labs(title = "Spleens sent to UCSD for Oxy and Coc 9/13/19")
+
+# unique id's, no duplicate id's 
+## olivier_spleen_list_df[duplicated(olivier_spleen_list_df$rfid)]
