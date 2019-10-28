@@ -595,6 +595,7 @@ WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
 
 # create the naive/scrubs dataset before removing it and clean up naive dataset 
+names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
 WFU_Olivier_co_naive_test <- lapply(WFU_Olivier_co_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
@@ -659,6 +660,7 @@ WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox_test)
 
 
 # create the naive/scrubs dataset before removing it and clean up naive dataset 
+names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
 WFU_Olivier_ox_naive_test <- lapply(WFU_Olivier_ox_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){

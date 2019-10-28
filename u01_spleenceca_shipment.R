@@ -80,6 +80,13 @@ ggplot(olivier_spleen_list_df, aes(x = sex, fill = sex)) +
 
 # are any of these found in naive 
 ## extract from the u01_qc file  
+# list <- list(Olivier_co_naive <- rbindlist(WFU_Olivier_co_naive_test, use.names = T, idcol = "cohort"), 
+#              Olivier_ox_naive <- rbindlist(WFU_Olivier_ox_naive_test, use.names = T, idcol = "cohort")) 
+olivier_spleen_list_df %>% 
+  mutate(Cocaine_Naive = ifelse(experiment == "Cocaine" && rfid %in% WFU_Olivier_co_naive_test$rfid, "Naive", "Not Naive"),
+         Oxycodone_Naive = ifelse(experiment == "Oxycodone" && rfid %in% WFU_Olivier_ox_naive_test$rfid, "Naive", "Not Naive")) %>% 
+  group_by(Cocaine_Naive, Oxycodone_Naive) %>% 
+  count() # All Not Naive
 
 # are all of these found in the experiments 
 ## extract from the u01_qc file  
@@ -87,9 +94,13 @@ ggplot(olivier_spleen_list_df, aes(x = sex, fill = sex)) +
 phenotyped_vs_spleens <- do.call("rbind", list(olivier_spleen_list_df$rfid, WFU_Olivier_ox_test_df$rfid, WFU_Olivier_co_test_df$rfid))
 any(duplicated(do.call("rbind", list(olivier_spleen_list_df$rfid, WFU_Olivier_ox_test_df$rfid, WFU_Olivier_co_test_df$rfid))))
 
-
-pd.merge(df1, df2, on=['Name'], how='inner')
-
+olivier_spleen_list_df %>% 
+  mutate(Cocaine_Data = ifelse(experiment == "Cocaine" && rfid %in% selfadmin_df$rfid, "Self admin data", "No self admin data")) %>% 
+         # ,
+         # Oxycodone_Data = ifelse(experiment == "Oxycodone" && rfid %in% WFU_Olivier_ox_naive_test$rfid, "Naive", "Not Naive")) %>% 
+  group_by(Cocaine_Data) %>% 
+           #, Oxycodone_Data) %>% 
+  count() # All 411 spleens have self admin data
 
 # check the number of characters in the rfid
 olivier_spleen_list_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # all id's are 15 digits here
