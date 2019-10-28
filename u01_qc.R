@@ -593,6 +593,16 @@ WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])
 # # make variable names consistent
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
+
+# create the naive/scrubs dataset before removing it and clean up naive dataset 
+WFU_Olivier_co_naive_test <- lapply(WFU_Olivier_co_test, function(df) {
+  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
+  if(length(rownumber) != 0){
+    subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
+  } else NULL
+})
+
+
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
 
