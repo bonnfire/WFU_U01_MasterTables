@@ -77,3 +77,23 @@ ggplot(olivier_spleen_list_df, aes(x = sex, fill = sex)) +
 
 # unique id's, no duplicate id's 
 ## olivier_spleen_list_df[duplicated(olivier_spleen_list_df$rfid)]
+
+# are any of these found in naive 
+## extract from the u01_qc file  
+
+# are all of these found in the experiments 
+## extract from the u01_qc file  
+## merge the two olivier Rdata files and compare the long rfid 
+phenotyped_vs_spleens <- do.call("rbind", list(olivier_spleen_list_df$rfid, WFU_Olivier_ox_test_df$rfid, WFU_Olivier_co_test_df$rfid))
+any(duplicated(do.call("rbind", list(olivier_spleen_list_df$rfid, WFU_Olivier_ox_test_df$rfid, WFU_Olivier_co_test_df$rfid))))
+
+
+pd.merge(df1, df2, on=['Name'], how='inner')
+
+
+# check the number of characters in the rfid
+olivier_spleen_list_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # all id's are 15 digits here
+WFU_Olivier_ox_test_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # one case isn't 15 digits
+WFU_Olivier_co_test_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # four cases aren't 15 digits
+
+

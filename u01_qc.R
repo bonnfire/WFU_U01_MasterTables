@@ -144,6 +144,14 @@ WFU_Flagel_test <- lapply(WFU_Flagel_test, transform, shipmentage = as.numeric(s
 lapply(WFU_Flagel_test, function(x) summary(x$shipmentage))
 subset(WFU_Flagel_test[[2]], shipmentage < 0) ## XX include this in Dropbox, notify Apurva and Oksana
 
+# # checking the number of rfid digits 
+
+lapply(WFU_Flagel_test, function(x){
+  x %>% 
+    mutate(rfid_digits = nchar(rfid)) %>% 
+    filter(rfid_digits != 15)
+})
+
 # # checking coat color consistency
 WFU_Flagel_test <- uniform.coatcolors(WFU_Flagel_test)
 lapply(WFU_Flagel_test, function(df)
@@ -190,9 +198,20 @@ WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
 WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
 
+
+
+# # checking the number of rfid digits 
+
+lapply(WFU_Kalivas_Italy_test, function(x){
+  x %>% 
+    mutate(rfid_digits = nchar(rfid)) %>% 
+    filter(rfid_digits != 15)
+})
+
 # # checking coat color consistency
 lapply(WFU_Kalivas_Italy_test, function(df)
   sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
+
 WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
 names(WFU_Kalivas_Italy_test) <- names(WFU_Kalivas_Italy)
 
@@ -218,6 +237,14 @@ WFU_Kalivas_test <- uniform.date.testingu01(WFU_Kalivas_test)
 # # add age of shipment and check consistency
 WFU_Kalivas_test <- lapply(WFU_Kalivas_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Kalivas_test, function(x) summary(x$shipmentage))
+
+# # checking the number of rfid digits 
+
+lapply(WFU_Kalivas_test, function(x){
+  x %>% 
+    mutate(rfid_digits = nchar(rfid)) %>% 
+    filter(rfid_digits != 15)
+})
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Kalivas_test, "coatcolor")
@@ -262,9 +289,13 @@ WFU_Jhou_test <- uniform.date.testingu01(WFU_Jhou_test)
 WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Jhou_test, function(x) summary(x$shipmentage))
 
-# # add age of shipment and check consistency
-WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, weanage = as.numeric(dow - dob))
-lapply(WFU_Jhou_test, function(x) summary(x$weanage))
+# # checking the number of rfid digits 
+
+lapply(WFU_Jhou_test, function(x){
+  x %>% 
+    mutate(rfid_digits = nchar(rfid)) %>% 
+    filter(rfid_digits != 15)
+})
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
@@ -372,6 +403,14 @@ WFU_Mitchell_test <- uniform.date.testingu01(WFU_Mitchell_test)
 # # add age of shipment and check consistency
 WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
+
+# # checking the number of rfid digits 
+
+lapply(WFU_Mitchell_test, function(x){
+  x %>% 
+    mutate(rfid_digits = nchar(rfid)) %>% 
+    filter(rfid_digits != 15)
+})
 
 # # checking coat color consistency
 # before unique.values.by.col(WFU_Mitchell_test, "coatcolor")
@@ -564,6 +603,15 @@ lapply(WFU_Olivier_co_test, str)
 # # checking date consistency 
 WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
 
+
+# # checking the number of rfid digits
+
+lapply(WFU_Olivier_co_test, function(x){
+ x %>%
+    mutate(rfid_digits = nchar(rfid)) %>%
+    filter(rfid_digits != 15)
+})
+
 # # add age of shipment and check consistency
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
@@ -572,6 +620,8 @@ lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is sl
 names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
 
 WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T)
+
+# create the naive dataframe
 
 # Outstanding issues: 
 # between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
@@ -582,6 +632,7 @@ WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T
 # Olivier(Oxycodone) #
 ######################
 WFU_Olivier_ox <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
+
 WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox, function(x){
   names(x) <- x[1, ] %>% as.character
@@ -608,6 +659,14 @@ WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x){
 # check id values 
 unique.values.length.by.col(WFU_Olivier_ox_test, idcols)
 
+# # checking the number of rfid digits
+
+lapply(WFU_Olivier_ox_test, function(x){
+  x %>%
+    mutate(rfid_digits = nchar(rfid)) %>%
+    filter(rfid_digits != 15)
+})
+
 # change coat colors
 WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
 
@@ -615,7 +674,13 @@ WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Olivier_ox_test, function(x) summary(x$shipmentage)) #all seem okay; slightly older cohort 2  
 
+
+# create the naive dataframe
+
+
 # rename all sheets 
 names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
 
 WFU_Olivier_ox_test_df <- rbindlist(WFU_Olivier_ox_test, id = "cohort", fill = T)
+
+
