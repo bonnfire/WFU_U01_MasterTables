@@ -610,12 +610,10 @@ WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test) # XX change
 
 # change date type
 # placed in this order to prevent excessive nas being introduced by coercion
-WFU_Olivier_co_test2 <- uniform.date.testingu01(WFU_Olivier_co_test)
+WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
 
 # change coat colors
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
-
-lapply(WFU_Olivier_co_test, str)
 
 # # checking date consistency 
 WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
@@ -658,6 +656,15 @@ WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox, function(x){
 
 WFU_Olivier_ox_test[[1]] <- WFU_Olivier_ox_test[[1]][, -c(16:18), drop = F]
 WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox_test)
+
+
+# create the naive/scrubs dataset before removing it and clean up naive dataset 
+WFU_Olivier_ox_naive_test <- lapply(WFU_Olivier_ox_test, function(df) {
+  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
+  if(length(rownumber) != 0){
+    subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
+  } else NULL
+})
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
