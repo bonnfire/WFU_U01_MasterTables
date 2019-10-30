@@ -8,6 +8,7 @@ library(readxl)
 library(lubridate)
 library(openxlsx)
 library(stringr)
+library(data.table)
 
 # QC Wake Forest University Shipment 
 
@@ -30,9 +31,12 @@ uniform.var.names.testingu01 <- function(df){
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
                                    c(" |\\.", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
                                    c("", "Number", "RFID", "DOW","LabAnimal", "Shipment", "Dames"))
+    # names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
+    #                                c("DateofShipment", "LabAnimalID"), 
+    #                                c("ShipmentDate", "LabAnimalNumber"))
     names(df[[i]]) <- mgsub::mgsub(names(df[[i]]),
-                                   c("DateofShipment", "LabAnimalID"), 
-                                   c("ShipmentDate", "LabAnimalNumber"))
+                                   c("DateofShipment", "LabAnimalNumber"), 
+                                   c("ShipmentDate", "LabAnimalID")) # actually keep the column named lab animal number
     names(df[[i]]) <- tolower(names(df[[i]]))
     df[[i]]
   })
@@ -170,7 +174,8 @@ WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
 WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
 WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]][-c(41:nrow(WFU_Kalivas_Italy_test[[1]])),]
 WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
-  mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)")
+  mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)") %>%
+  select(-pairnumber)
 WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]][-c(41:nrow(WFU_Kalivas_Italy_test[[3]])), -c(16:19)] # XX remove three empty columns, age@ship, and bottom rows 
 WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]] %>%
   mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
@@ -184,7 +189,8 @@ WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
-})
+  })
+# to do: add the shipment and wean ages either as separate function or integrate into the function above
   
 # experiment specific: second cohort requires remove additional 15 rats sent to italy note because they are pilot rats 
 WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
@@ -206,6 +212,10 @@ WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
 # # add age of shipment and check consistency
 WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
+
+# # add age of wean and check consistency
+WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Kalivas_Italy_test, function(x) summary(x$weanage))
 
 # # checking the number of rfid digits 
 
@@ -233,9 +243,11 @@ WFU_Kalivas_updated3 <- u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")
 WFU_Kalivas[[3]] <- WFU_Kalivas_updated3[[1]]
 
 WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
+WFU_Kalivas_test[[1]] <- WFU_Kalivas_test[[1]] %>% 
+  select(-pairnumber)
 
 # # checking id vars
-idcols <- c("labanimalnumber", "accessid", "rfid")
+idcols <- c("labanimalid", "accessid", "rfid")
 unique.values.length.by.col(WFU_Kalivas_test, idcols) ## XX generalize the test so it is able to skip the test if the column doesn't exist
 
 # # checking date consistency 
@@ -244,6 +256,13 @@ WFU_Kalivas_test <- uniform.date.testingu01(WFU_Kalivas_test)
 # # add age of shipment and check consistency
 WFU_Kalivas_test <- lapply(WFU_Kalivas_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Kalivas_test, function(x) summary(x$shipmentage))
+
+# # add age of wean and check consistency
+WFU_Kalivas_test <- lapply(WFU_Kalivas_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Kalivas_test, function(x) summary(x$weanage))
+
+# # add comment and resolution and check consistency
+WFU_Kalivas_test <- lapply(WFU_Kalivas_test, cbind, comment = NA, resolution = NA)
 
 # # checking the number of rfid digits 
 
@@ -296,6 +315,12 @@ WFU_Jhou_test <- uniform.date.testingu01(WFU_Jhou_test)
 WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Jhou_test, function(x) summary(x$shipmentage))
 
+# # add age of wean and check consistency
+WFU_Jhou_test <- lapply(WFU_Jhou_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Jhou_test, function(x) summary(x$weanage))
+
+# # add comment and resolution and check consistency
+WFU_Jhou_test <- lapply(WFU_Jhou_test, cbind, comment = NA, resolution = NA)
 # # checking the number of rfid digits 
 
 lapply(WFU_Jhou_test, function(x){
@@ -401,7 +426,7 @@ WFU_Mitchell_test[[1]]$comment <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregna
 WFU_Mitchell_test[[1]]$resolution <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "REMOVE_FROM_EXCLUSION_AND_REPLACE", NA)
 
 # # checking id vars
-idcols <- c("labanimalnumber", "accessid", "rfid")
+idcols <- c("labanimalid", "accessid", "rfid")
 unique.values.length.by.col(WFU_Mitchell_test, idcols)
 
 # # checking date consistency 
@@ -410,6 +435,13 @@ WFU_Mitchell_test <- uniform.date.testingu01(WFU_Mitchell_test)
 # # add age of shipment and check consistency
 WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
+
+# # add age of wean and check consistency
+WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Mitchell_test, function(x) summary(x$weanage))
+
+# # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
+#WFU_Mitchell_test <- lapply(WFU_Mitchell_test, cbind, comment = NA, resolution = NA)
 
 # # checking the number of rfid digits 
 
@@ -632,6 +664,15 @@ lapply(WFU_Olivier_co_test, function(x){
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
 
+
+# # add age of wean and check consistency
+WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Olivier_co_test, function(x) summary(x$weanage))
+
+# # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
+WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, cbind, comment = NA, resolution = NA)
+
+
 # rename all sheets 
 names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
 
@@ -696,13 +737,17 @@ lapply(WFU_Olivier_ox_test, function(x){
 # change coat colors
 WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
 
-# validate age
+# add age of shipment and check consistency
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob))
 lapply(WFU_Olivier_ox_test, function(x) summary(x$shipmentage)) #all seem okay; slightly older cohort 2  
 
 
-# create the naive dataframe
+# # add age of wean and check consistency
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_Olivier_ox_test, function(x) summary(x$weanage))
 
+# # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, cbind, comment = NA, resolution = NA)
 
 # rename all sheets 
 names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames

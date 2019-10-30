@@ -15,6 +15,9 @@ shipments_df <- rbindlist(shipments, id = "U01", fill = T)
 
 
 save(shipments, file = "shipments.RData")
+openxlsx::write.xlsx(shipments$Mitchell[2,], file = "u01_masterfile_template.xlsx")
+
 save(shipments_df, file = "shipmentswithU01col.RData")
-shipments_df <- rbindlist(shipments, id = "U01", fill = T)
+
+
 
