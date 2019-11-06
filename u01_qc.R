@@ -598,6 +598,7 @@ str(WFU_Mitchell_test)
 ######################
 ## Olivier(Cocaine) ##
 ######################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
 WFU_Olivier_co <- u01.importxlsx("UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx")
 
 # following instructions from Angela Beeson at WFU :

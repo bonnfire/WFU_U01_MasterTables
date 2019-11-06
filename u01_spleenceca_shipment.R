@@ -57,9 +57,9 @@ olivier_spleen_list[[10]] <- NULL
 # remove na rows and split the cohort into two
 olivier_spleen_list_df <- lapply(olivier_spleen_list, function(df){
   df <- df %>% 
-    filter(!grepl("^(?!\\d)", rfid, perl = T)) %>% 
+    dplyr::filter(!grepl("^(?!\\d)", rfid, perl = T)) %>% 
     na.omit(rfid) %>%
-    separate(col = cohort, into = c("cohort", "experiment"), sep = " (?=[^ ]+$)") %>% 
+    tidyr::separate(col = cohort, into = c("cohort", "experiment"), sep = " (?=[^ ]+$)") %>% 
     mutate(sex = substring(labanimalid, 1, 1))
 return(df)
 }) %>% rbindlist()
@@ -82,11 +82,19 @@ ggplot(olivier_spleen_list_df, aes(x = sex, fill = sex)) +
 ## extract from the u01_qc file  
 # list <- list(Olivier_co_naive <- rbindlist(WFU_Olivier_co_naive_test, use.names = T, idcol = "cohort"), 
 #              Olivier_ox_naive <- rbindlist(WFU_Olivier_ox_naive_test, use.names = T, idcol = "cohort")) 
+WFU_Olivier_co_naive_df <- rbindlist(WFU_Olivier_co_naive_test, use.names = T)
 olivier_spleen_list_df %>% 
-  mutate(Cocaine_Naive = ifelse(experiment == "Cocaine" && rfid %in% WFU_Olivier_co_naive_test$rfid, "Naive", "Not Naive"),
-         Oxycodone_Naive = ifelse(experiment == "Oxycodone" && rfid %in% WFU_Olivier_ox_naive_test$rfid, "Naive", "Not Naive")) %>% 
+  mutate(Cocaine_Naive = ifelse(experiment == "Cocaine" && rfid %in% WFU_Olivier_co_naive_df$rfid, "Naive", "Not Naive"),
+         Oxycodone_Naive = ifelse(experiment == "Oxycodone" && rfid %in% WFU_Olivier_co_naive_df$rfid, "Naive", "Not Naive")) %>% 
   group_by(Cocaine_Naive, Oxycodone_Naive) %>% 
   count() # All Not Naive
+
+# are any of the shipped spleens from the naive dataset 
+olivier_spleen_list_df %>% 
+  dplyr::filter(experiment == "Cocaine", rfid %in% WFU_Olivier_co_naive_df$rfid)
+# are any of the shipped spleens from the collected data 
+olivier_spleen_list_df %>% 
+  dplyr::filter(experiment == "Cocaine", rfid %in% $rfid)
 
 # are all of these found in the experiments 
 ## extract from the u01_qc file  
