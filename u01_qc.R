@@ -1,4 +1,4 @@
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
+setwd("~/Dropbox (Palmer Lab)/U01 folder")
 rm(list = ls())
 
 # Load libraries
@@ -96,6 +96,13 @@ remove.scrubs.and.narows <- function(df){
     # df[[i]] <- ifelse(which(is.na(df[[i]]$rfid))[1] > 1, df[[i]][- c(which(is.na(df[[i]]$rfid))[1] : nrow(df[[i]])), ],  df[[i]])
     # df[[i]] <- df[[i]][rowSums(is.na(df[[i]])) != ncol(df[[i]]), ] #remove rows that have all na
     # df[[i]] <- df[[i]][ , colSums(is.na(df[[i]])) == 0] # remove columns that have any na
+    return(df[[i]])
+  })
+}
+
+uniform.boxformat <- function(df){
+  lapply(seq_along(df), function(i){
+    df[[i]]$shipmentbox <- str_extract(df[[i]]$shipmentbox, "\\d+")
     return(df[[i]])
   })
 }
@@ -627,59 +634,62 @@ WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
 
-# create the naive/scrubs dataset before removing it and clean up naive dataset 
+# create the naive/scrubs dataset before removing the na rows and clean up naive dataset 
 names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
 WFU_Olivier_co_naive_test <- lapply(WFU_Olivier_co_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
-})
+}) %>% rbindlist(use.names=T, idcol = "cohort")
 
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
 
-WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test) # XX changed the function, test if more efficient 
+# 11/7 rather than removing the scrubs, we will be commenting scrub status to each animal
+# WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test) # XX changed the function, test if more efficient 
 
 # change date type
 # placed in this order to prevent excessive nas being introduced by coercion
 WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
 
+# change box
+WFU_Olivier_co_test <- uniform.boxformat(WFU_Olivier_co_test)
+
 # change coat colors
 WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
-
-# # checking date consistency 
-WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
-
-
-# # checking the number of rfid digits
-
-lapply(WFU_Olivier_co_test, function(x){
- x %>%
-    mutate(rfid_digits = nchar(rfid)) %>%
-    filter(rfid_digits != 15)
-})
 
 # # add age of shipment and check consistency
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
 
-
 # # add age of wean and check consistency
-WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, weanage = as.numeric(dow - dob))
+WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
 lapply(WFU_Olivier_co_test, function(x) summary(x$weanage))
 
 # # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, cbind, comment = NA, resolution = NA)
 
+# # checking the number of rfid digits
 
-# rename all sheets 
+lapply(WFU_Olivier_co_test, function(x){
+ x %>%
+    dplyr::mutate(rfid_digits = nchar(rfid)) %>%
+    dplyr::filter(rfid_digits != 15)
+})
+
+# rename all sheets (with correct cohort format)
 names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
-
 WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T)
 
-# create the naive dataframe
+# append naive comment to dataframe
+# # add comment of scrubs for matching rfid 
+WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>% 
+  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Naive", NA)) %>% 
+  dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
+# to check if all naive cases were identified: all 15 were 
+# WFU_Olivier_co_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
 
 # Outstanding issues: 
 # between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
