@@ -5,11 +5,12 @@ shipments <- list("Kalivas_Italy" = glimpse(WFU_Kalivas_Italy_test_df),
                     "Olivier_Co" = glimpse(WFU_Olivier_co_test_df), 
                     "Olivier_Oxy" = glimpse(WFU_Olivier_ox_test_df))
 shipments <- lapply(shipments, function(x){
-  x$cohort <- stringr::str_match(x$cohort, "#\\d+")
-  x$cohort <- gsub("#", "Cohort0", x$cohort)
+  x$cohort <- stringr::str_match(x$cohort, "#(\\d+).*?")[,2]
+  x$cohort <- gsub('([[:digit:]]{1})$', '0\\1', x$cohort)
   return(x)
 })
 shipments_df <- rbindlist(shipments, id = "U01", fill = T)
+sapply(shipments_df, unique) # check if all formats are consistent # NOT YET!!
 
 # experiments <- mapply(append, experiments, "master_table") # by apurva's request
 

@@ -82,7 +82,7 @@ ggplot(olivier_spleen_list_df, aes(x = sex, fill = sex)) +
 ## extract from the u01_qc file  
 # list <- list(Olivier_co_naive <- rbindlist(WFU_Olivier_co_naive_test, use.names = T, idcol = "cohort"), 
 #              Olivier_ox_naive <- rbindlist(WFU_Olivier_ox_naive_test, use.names = T, idcol = "cohort")) 
-WFU_Olivier_co_naive_df <- rbindlist(WFU_Olivier_co_naive_test, use.names = T)
+WFU_Olivier_co_naive_df <- rbindlist(WFU_Olivier_co_naive_test, use.names = T, idcol = "cohort")
 olivier_spleen_list_df %>% 
   mutate(Cocaine_Naive = ifelse(experiment == "Cocaine" && rfid %in% WFU_Olivier_co_naive_df$rfid, "Naive", "Not Naive"),
          Oxycodone_Naive = ifelse(experiment == "Oxycodone" && rfid %in% WFU_Olivier_co_naive_df$rfid, "Naive", "Not Naive")) %>% 
@@ -94,7 +94,34 @@ olivier_spleen_list_df %>%
   dplyr::filter(experiment == "Cocaine", rfid %in% WFU_Olivier_co_naive_df$rfid)
 # are any of the shipped spleens from the collected data 
 olivier_spleen_list_df %>% 
-  dplyr::filter(experiment == "Cocaine", rfid %in% $rfid)
+  dplyr::filter(experiment == "Cocaine", rfid %in% selfadmin_df$rfid) %>%
+  group_by(cohort) %>% 
+  summarise(n = n())
+
+olivier_spleen_list_df %>%
+  dplyr::filter(experiment == "Cocaine") %>% 
+  group_by(cohort) %>% 
+  summarise(n = n())
+
+# which cohorts are the spleens from that don't have data
+olivier_spleen_list_df %>% 
+  dplyr::filter(experiment == "Cocaine", !rfid %in% selfadmin_df$rfid) %>% 
+  group_by(cohort) %>% 
+  summarise(n = n())
+# spleen that don't have data (test if they overlap with the truncated id's)
+olivier_spleen_list_df %>% 
+  dplyr::filter(experiment == "Cocaine", !rfid %in% selfadmin_df$rfid) %>% 
+  select(rfid) %>% 
+  mutate(nchar = nchar(rfid))
+
+# how many and which naive rats have data
+WFU_Olivier_co_naive_df %>% 
+  dplyr::filter(rfid %in% selfadmin_df$rfid) %>% 
+  group_by(cohort) %>% 
+  summarise(n = n())
+
+WFU_Olivier_co_naive_df %>% 
+  dplyr::filter(rfid %in% selfadmin_df$rfid)
 
 # are all of these found in the experiments 
 ## extract from the u01_qc file  
@@ -113,6 +140,9 @@ olivier_spleen_list_df %>%
 # check the number of characters in the rfid
 olivier_spleen_list_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # all id's are 15 digits here
 WFU_Olivier_ox_test_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # one case isn't 15 digits
-WFU_Olivier_co_test_df %>% mutate(rfid_digits = nchar(rfid)) %>% filter(rfid_digits != 15) # four cases aren't 15 digits
+WFU_Olivier_co_test_df %>% dplyr::mutate(rfid_digits = nchar(rfid)) %>% dplyr::filter(rfid_digits != 15) # four cases aren't 15 digits
 
-
+olivier_spleen_list_df %>% 
+  dplyr::filter(experiment == "Cocaine", !rfid %in% selfadmin_df$rfid) %>% 
+  select(rfid) %>% 
+  mutate(nchar = nchar(rfid))
