@@ -7,6 +7,8 @@ shipments <- list("Kalivas_Italy" = glimpse(WFU_Kalivas_Italy_test_df),
 shipments <- lapply(shipments, function(x){
   x$cohort <- stringr::str_match(x$cohort, "#(\\d+).*?")[,2]
   x$cohort <- ifelse(nchar(x$cohort) > 1, x$cohort, gsub('([[:digit:]]{1})$', '0\\1', x$cohort)) 
+  x$litternumber = as.numeric(x$litternumber)
+  x$littersize = as.numeric(x$littersize)
   return(x)
 })
 shipments_df <- rbindlist(shipments, id = "U01", fill = T)
