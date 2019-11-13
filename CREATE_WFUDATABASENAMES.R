@@ -6,7 +6,7 @@ shipments <- list("Kalivas_Italy" = glimpse(WFU_Kalivas_Italy_test_df),
                     "Olivier_Oxy" = glimpse(WFU_Olivier_ox_test_df))
 shipments <- lapply(shipments, function(x){
   x$cohort <- stringr::str_match(x$cohort, "#(\\d+).*?")[,2]
-  x$cohort <- gsub('([[:digit:]]{1})$', '0\\1', x$cohort)
+  x$cohort <- ifelse(nchar(x$cohort) > 1, x$cohort, gsub('([[:digit:]]{1})$', '0\\1', x$cohort)) 
   return(x)
 })
 shipments_df <- rbindlist(shipments, id = "U01", fill = T)

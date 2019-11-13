@@ -694,7 +694,7 @@ WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>%
 # Outstanding issues: 
 # between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
 # diff bw labanimalid vs labanimalnumber 
-# id is the letter followed by numbers and number should all be number (currently mistranslated)
+# id is the letter followed by numbers and number should all be number (currently mistranslated -- should be fixed now)
 
 ######################
 # Olivier(Oxycodone) #
@@ -722,13 +722,13 @@ WFU_Olivier_ox_naive_test <- lapply(WFU_Olivier_ox_test, function(df) {
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
-WFU_Olivier_ox_test <- remove.scrubs.and.narows(WFU_Olivier_ox_test) # remove rows that don't have rfid to include the trailing date case in sheet 5
+# WFU_Olivier_ox_test <- remove.scrubs.and.narows(WFU_Olivier_ox_test) # remove rows that don't have rfid to include the trailing date case in sheet 5
 
 # change date type
 WFU_Olivier_ox_test[[2]]$shipmentdate <- as.POSIXct("2018-09-11", tz = "UTC") # must add shipment date to sheet 2 
 WFU_Olivier_ox_test <- uniform.date.testingu01(WFU_Olivier_ox_test)
 
-# make shipment box uniform ** EXPERIMENTER SPECIFIC **
+# make shipment box uniform ** EXPERIMENTER SPECIFIC ** BOX 3  to 3
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x){
   x$shipmentbox <- stringr::str_extract(x$shipmentbox, "\\d+")
   return(x)
@@ -742,7 +742,7 @@ unique.values.length.by.col(WFU_Olivier_ox_test, idcols)
 lapply(WFU_Olivier_ox_test, function(x){
   x %>%
     mutate(rfid_digits = nchar(rfid)) %>%
-    filter(rfid_digits != 15)
+    dplyr::filter(rfid_digits != 15)
 })
 
 # change coat colors
@@ -764,5 +764,9 @@ WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, cbind, comment = NA, resoluti
 names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
 
 WFU_Olivier_ox_test_df <- rbindlist(WFU_Olivier_ox_test, id = "cohort", fill = T)
+WFU_Olivier_ox_test_df <- WFU_Olivier_ox_test_df %>% 
+  dplyr::mutate(comment = ifelse(rfid %in% rbindlist(WFU_Olivier_ox_naive_test, use.names=T)$rfid, "Naive", comment)) %>% 
+  dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
 
-
+# rbindlist(WFU_Olivier_ox_naive_test, use.names=T)$rfid %>% length() and WFU_Olivier_ox_test_df %>% dplyr::filter(!is.na(comment)) %>% dim() 
+# BOTH EQUAL 75 SO THE CODE WORKS
