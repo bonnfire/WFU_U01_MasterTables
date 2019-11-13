@@ -1,4 +1,4 @@
-setwd("~/Dropbox (Palmer Lab)/U01 folder")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
 rm(list = ls())
 
 # Load libraries
@@ -177,20 +177,7 @@ names(WFU_Flagel_test) <- names(WFU_Flagel)
 WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
 WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
 
-# add comment section (esp for delayed shipping day)
-WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
-WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]][-c(41:nrow(WFU_Kalivas_Italy_test[[1]])),]
-WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
-  mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)") %>%
-  select(-pairnumber)
-WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]][-c(41:nrow(WFU_Kalivas_Italy_test[[3]])), -c(16:19)] # XX remove three empty columns, age@ship, and bottom rows 
-WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]] %>%
-  mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
-
-# add resolution section XX can I assume that these are ignorable??? 
- 
-
-# create the naive dataset before removing it and clean up naive dataset 
+# create the naive dataset before removing it and clean up naive dataset (pilot 15 rats in cohort 2)
 WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
@@ -201,17 +188,17 @@ WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
   
 # experiment specific: second cohort requires remove additional 15 rats sent to italy note because they are pilot rats 
 WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
-removeallnarow <- function(df){
-  ind <- apply(df, 1, function(x) all(is.na(x)))
-  df <- df[ !ind, ]
-} # remove rows with all na
-WFU_Kalivas_Italy_test[[2]] <- removeallnarow(WFU_Kalivas_Italy_test[[2]])
+# removeallnarow <- function(df){
+#   ind <- apply(df, 1, function(x) all(is.na(x)))
+#   df <- df[ !ind, ]
+# } # remove rows with all na
+# WFU_Kalivas_Italy_test[[2]] <- removeallnarow(WFU_Kalivas_Italy_test[[2]]) # might not actually need this
 
 # # checking id vars
 idcols <- c("accessid", "rfid")
 unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
 ## doesn't have labanimalnumber
-WFU_Kalivas_Italy_test
+
 
 # # checking date consistency 
 WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
@@ -237,6 +224,18 @@ lapply(WFU_Kalivas_Italy_test, function(df)
   sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
 
 WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+
+# add comment section (esp for delayed shipping day)
+WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
+
+WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
+  mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)") %>%
+  select(-pairnumber)
+WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]][, -c(16:19)] %>% # XX remove three empty columns, age@ship, and bottom rows 
+  mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
+
+# add resolution section XX can I assume that these are ignorable??? 
+
 names(WFU_Kalivas_Italy_test) <- names(WFU_Kalivas_Italy)
 
 WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fill = T)
@@ -417,7 +416,7 @@ WFU_Mitchell_test <- uniform.var.names.testingu01(WFU_Mitchell)
 
 # fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (add comment that the highlighted should be excluded)
 pregnant <- WFU_Mitchell_test[[1]] %>% 
-  filter(is.na(`15`)==F) %>% 
+  dplyr::filter(is.na(`15`)==F) %>% 
   select(rfid) %>% 
   unlist %>% 
   as.vector # extract the pregnant cases to include as comment
@@ -426,11 +425,6 @@ WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][ , colSums(is.na(WFU_Mitchell_t
 
 WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]] %>% 
   mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
-
-# add comment and resolution columns **EXPERIMENTER SPECIFIC** 
-WFU_Mitchell_test <- lapply(WFU_Mitchell_test, cbind, comment = NA, resolution = NA) ## XX PICK UP FROM HERE
-WFU_Mitchell_test[[1]]$comment <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "Pregnant female", NA)
-WFU_Mitchell_test[[1]]$resolution <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "REMOVE_FROM_EXCLUSION_AND_REPLACE", NA)
 
 # # checking id vars
 idcols <- c("labanimalid", "accessid", "rfid")
@@ -449,6 +443,12 @@ lapply(WFU_Mitchell_test, function(x) summary(x$weanage))
 
 # # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
 #WFU_Mitchell_test <- lapply(WFU_Mitchell_test, cbind, comment = NA, resolution = NA)
+
+# add comment and resolution columns **EXPERIMENTER SPECIFIC** 
+WFU_Mitchell_test <- lapply(WFU_Mitchell_test, cbind, comment = NA, resolution = NA) ## XX PICK UP FROM HERE
+WFU_Mitchell_test[[1]]$comment <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "Pregnant female", NA)
+WFU_Mitchell_test[[1]]$resolution <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pregnant, "REMOVE_FROM_EXCLUSION_AND_REPLACE", NA)
+
 
 # # checking the number of rfid digits 
 
@@ -686,7 +686,7 @@ WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T
 # append naive comment to dataframe
 # # add comment of scrubs for matching rfid 
 WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>% 
-  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Naive", NA)) %>% 
+  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Naive", comment)) %>% 
   dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
 # to check if all naive cases were identified: all 15 were 
 # WFU_Olivier_co_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
