@@ -78,23 +78,6 @@ ggplot(shipments_df, aes(littersize)) +
   facet_grid(~U01) + 
   labs(title = "Litter size by U01, from WFU shipments") 
 
-grid::grid.newpage()
-
-shipments_df %>% 
-  group_by(sires, dames, cohort, U01) %>% 
-  add_count() %>% 
-  select(U01, sires, dames, cohort, n) %>% 
-  ungroup() %>% 
-  rename("pairsbycohort"="n") %>% 
-  group_by(sires,dames, U01) %>% 
-  add_count() %>% 
-  rename("pairsbyexp"="n") %>% 
-  dplyr::filter(pairsbycohort != pairsbyexp) %>% 
-  unique() %>% 
-  arrange(U01, sires) %>%
-  data.frame() %>% 
-  gridExtra::grid.table(rows = NULL, theme = gridExtra::ttheme_default(base_size = 8))
-
 # ggplot(shipments_df, aes(littersize, group = cohort, fill = cohort)) +
 #   geom_histogram(stat = "count") +
 #   # aes(color = litternumber)
@@ -122,3 +105,53 @@ ggplot(shipments_df, aes(weanage, shipmentage)) +
   labs(title = "Age at shipment vs age at wean by U01, from WFU shipments") 
 
 dev.off()
+
+library(grid)
+library(gridExtra)
+pdf("WFU_QC_Siblings.pdf")
+
+#grid::grid.newpage()
+
+wfu_shipmentsiblings_allexps <- shipments_df %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("pairsbycohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("pairsbyexp"="n") %>% 
+  dplyr::filter(pairsbycohort != pairsbyexp) %>% 
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
+# %>% 
+#   gridExtra::grid.table(rows = NULL, theme = gridExtra::ttheme_default(base_size = 8))
+
+tg <- tableGrob(wfu_shipmentsiblings_allexps, rows = seq_len(nrow(wfu_shipmentsiblings_allexps))) 
+
+fullheight <- convertHeight(sum(tg$heights), "cm", valueOnly = TRUE)
+margin <- unit(0.51,"in")
+margin_cm <- convertHeight(margin, "cm", valueOnly = TRUE)
+a4height <- 29.7 - margin_cm
+nrows <- nrow(tg)
+npages <- ceiling(fullheight / a4height)
+
+heights <- convertHeight(tg$heights, "cm", valueOnly = TRUE) 
+rows <- cut(cumsum(heights), include.lowest = FALSE,
+            breaks = c(0, cumsum(rep(a4height, npages))))
+
+groups <- split(seq_len(nrows), rows)
+
+gl <- lapply(groups, function(id) tg[id,])
+
+for(page in seq_len(npages)){
+  grid.newpage()
+  grid.rect(width=unit(21,"cm") - margin,
+            height=unit(29.7,"cm")- margin)
+  grid.draw(gl[[page]])
+}
+## alternative to explicit loop:
+## print(marrangeGrob(grobs=gl, ncol=1, nrow=1, top=NULL))
+dev.off()
+
