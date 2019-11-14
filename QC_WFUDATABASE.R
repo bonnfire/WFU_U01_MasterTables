@@ -110,7 +110,7 @@ dev.off()
 ###### QC Number of siblings
 ########################################################
 
-
+# for shipment timeline graph
 wfu_shipmentsiblings_allexpswdate <- shipments_df %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
@@ -123,7 +123,7 @@ wfu_shipmentsiblings_allexpswdate <- shipments_df %>%
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01)
   
   
-
+# for details
 wfu_shipmentsiblings_allexps <- shipments_df %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
@@ -138,22 +138,16 @@ wfu_shipmentsiblings_allexps <- shipments_df %>%
   arrange(U01, sires) %>%
   data.frame() 
 
+# for overview
 wfu_shipmentsiblings_byu01 <- wfu_shipmentsiblings_allexps %>%
   ungroup() %>% 
   group_by(U01) %>% 
   count()
-
-
-
+# clearer overview text 
 wfu_shipmentsiblings_byu01$U01 <- mgsub::mgsub(wfu_shipmentsiblings_byu01$U01,
                                c("Olivier_Co", "Olivier_Oxy"),
                                c("Olivier Cocaine", "Olivier Oxycodone"))
-
-# knitr::kable(wfu_shipmentsiblings_allexps)
-
-# %>% 
-#   gridExtra::grid.table(rows = NULL, theme = gridExtra::ttheme_default(base_size = 8))
-
+# for details grid reformatting, need to cut the cases up to fit onto pages
 tg <- tableGrob(wfu_shipmentsiblings_allexps, rows = seq_len(nrow(wfu_shipmentsiblings_allexps)))
 
 fullheight <- convertHeight(sum(tg$heights), "cm", valueOnly = TRUE)
@@ -189,14 +183,12 @@ myTableGrob <- function(data_dt, title_v, fontsize_v = 14){
   table_grob <- gtable_add_grob(table_grob, title_grob, 1, 1, 1, ncol(table_grob), clip = "off")
 }
 
+#  compile into pdf
 pdf("WFU_QC_Siblings.pdf", paper = "a4", width = 0, height = 0)
-
-
 
 df<-data.frame(blurb = c("In WFU's rat shipments to U01 projects, we expect each cohort to represent different generations or a separate set of sire-dame pairs. 
 Therefore, we would expect to find the number of rats from the same sire-dame pair in one cohort to be equal to the the number of rats from the same sire-dame pair in the overall U01. 
 We have found that to not be the case for four of the U01's. The first figure and the second figure summarize the number of cases along with the timeline of shipments, while the last figure provides detailed information of each case. "))
-
 d = sapply(lapply(df$blurb, strwrap, width=70), paste, collapse="\n")
 grid.table(d)
 
@@ -207,12 +199,8 @@ grid.draw(default_grob)
 
 ggplot(wfu_shipmentsiblings_allexpswdate, aes(U01, shipmentdate)) +
   geom_count()+ 
-  # facet_grid(~U01) + 
   labs(title = "Shipment Dates Timeline by U01, from WFU shipments") + 
-  # theme(axis.text=element_text(size=8, angle = 45)) + 
   scale_y_datetime(date_breaks = "25 day")
-
-# grid.text("Animals. Below you will find ", x = unit(0.25, "npc"), y = unit(1.25, "npc"), gp=gpar(fontsize=12, col="black"))
 
 for(page in seq_len(npages)){
   grid.newpage()
@@ -220,8 +208,6 @@ for(page in seq_len(npages)){
             height=unit(29.7,"cm")- margin)
   grid.draw(gl[[page]])
 }
-
-
 
 # alternative to explicit loop:
 # print(marrangeGrob(grobs=gl, ncol=1, nrow=1, top=NULL))
