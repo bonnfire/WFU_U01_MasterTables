@@ -20,13 +20,14 @@ ggplot(shipments_df, aes(cohort)) +
 # create data object with data combined with shipments info
 # shipments_df
 
-ggplot(shipments_df, aes(cohort, fill = source)) +
-  geom_bar(stat = "count", position='dodge') + 
-  facet_grid(~U01) + 
-  labs(title = "Size of Cohorts by U01, from WFU shipments and Data Received") + 
-  theme(axis.text=element_text(size=8, angle = 45)) +
-  geom_text(stat='count', aes(label=..count..), size=3, vjust=-1)
 
+# ggplot(shipments_df, aes(cohort, fill = source)) +
+#   geom_bar(stat = "count", position='dodge') + 
+#   facet_grid(~U01) + 
+#   labs(title = "Size of Cohorts by U01, from WFU shipments and Data Received") + 
+#   theme(axis.text=element_text(size=8, angle = 45)) +
+#   geom_text(stat='count', aes(label=..count..), size=3, vjust=-1)
+###############################3
 
 ggplot(shipments_df, aes(dames, sires)) +
   geom_point(aes(color = U01)) + 
@@ -77,6 +78,8 @@ ggplot(shipments_df, aes(littersize)) +
   facet_grid(~U01) + 
   labs(title = "Litter size by U01, from WFU shipments") 
 
+grid::grid.newpage()
+
 shipments_df %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
@@ -88,9 +91,9 @@ shipments_df %>%
   rename("pairsbyexp"="n") %>% 
   dplyr::filter(pairsbycohort != pairsbyexp) %>% 
   unique() %>% 
+  arrange(U01, sires) %>%
   data.frame() %>% 
-  gridExtra::grid.table()
-
+  gridExtra::grid.table(rows = NULL, theme = gridExtra::ttheme_default(base_size = 8))
 
 # ggplot(shipments_df, aes(littersize, group = cohort, fill = cohort)) +
 #   geom_histogram(stat = "count") +
@@ -113,7 +116,7 @@ ggplot(shipments_df, aes(rack, shipmentbox)) +
   labs(title = "************Rack vs box by U01, from WFU shipments") 
 
 ggplot(shipments_df, aes(weanage, shipmentage)) +
-  geom_jitter() +
+  geom_point() +
   # aes(color = litternumber)
   facet_grid(~U01) + 
   labs(title = "Age at shipment vs age at wean by U01, from WFU shipments") 
