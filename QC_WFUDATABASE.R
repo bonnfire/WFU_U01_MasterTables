@@ -111,6 +111,18 @@ dev.off()
 ########################################################
 
 
+wfu_shipmentsiblings_allexpswdate <- shipments_df %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n, shipmentdate) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01)
+  
+  
 
 wfu_shipmentsiblings_allexps <- shipments_df %>% 
   group_by(sires, dames, cohort, U01) %>% 
@@ -130,6 +142,8 @@ wfu_shipmentsiblings_byu01 <- wfu_shipmentsiblings_allexps %>%
   ungroup() %>% 
   group_by(U01) %>% 
   count()
+
+
 
 wfu_shipmentsiblings_byu01$U01 <- mgsub::mgsub(wfu_shipmentsiblings_byu01$U01,
                                c("Olivier_Co", "Olivier_Oxy"),
@@ -159,15 +173,26 @@ gl <- lapply(groups, function(id) tg[id,])
 
 pdf("WFU_QC_Siblings.pdf", paper = "a4", width = 0, height = 0)
 
-grid.table(wfu_shipmentsiblings_byu01)
+
+
 df<-data.frame(blurb = c("In WFU's rat shipments to U01 projects, we expect each cohort to represent different generations or a separate set of sire-dame pairs. 
 Therefore, we would expect to find the number of rats from the same sire-dame pair in one cohort to be equal to the the number of rats from the same sire-dame pair in the overall U01. 
-We have found that to not be the case for four of the U01's. The first figure summarizes the number of cases, while the second figure provides detailed information of each case."))
+We have found that to not be the case for four of the U01's. The first figure and the second figure summarize the number of cases along with the timeline of shipments, while the last figure provides detailed information of each case. "))
 
-d = sapply(lapply(df$blurb, strwrap, width=50), paste, collapse="\n")
+d = sapply(lapply(df$blurb, strwrap, width=70), paste, collapse="\n")
 grid.table(d)
 
-grid.text("Animals. Below you will find ", x = unit(0.25, "npc"), y = unit(1.25, "npc"), gp=gpar(fontsize=12, col="black"))
+grid.newpage()
+grid.table(wfu_shipmentsiblings_byu01)
+
+ggplot(wfu_shipmentsiblings_allexpswdate, aes(U01, shipmentdate)) +
+  geom_count()+ 
+  # facet_grid(~U01) + 
+  labs(title = "Shipment Dates Timeline by U01, from WFU shipments") + 
+  # theme(axis.text=element_text(size=8, angle = 45)) + 
+  scale_y_datetime(date_breaks = "25 day")
+
+# grid.text("Animals. Below you will find ", x = unit(0.25, "npc"), y = unit(1.25, "npc"), gp=gpar(fontsize=12, col="black"))
 
 for(page in seq_len(npages)){
   grid.newpage()
