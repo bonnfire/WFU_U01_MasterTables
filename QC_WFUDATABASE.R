@@ -80,10 +80,10 @@ ggplot(shipments_df, aes(littersize)) +
 shipments_df %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
-  select(sires, dames, cohort, n, U01) %>% 
+  select(U01, sires, dames, cohort, n) %>% 
   ungroup() %>% 
   rename("pairsbycohort"="n") %>% 
-  group_by(sires,dames) %>% 
+  group_by(sires,dames, U01) %>% 
   add_count() %>% 
   rename("pairsbyexp"="n") %>% 
   dplyr::filter(pairsbycohort != pairsbyexp) %>% 

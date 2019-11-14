@@ -665,6 +665,11 @@ WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.n
 lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
 
 # # add age of wean and check consistency
+### notes from Angela at WFU at 11/14/2019 11:32 AM  "The 4 from cocaine should have had a wean date of 9-17-17. "
+WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, function(x) {
+  x$dow[which(x$rfid %in% c("933000120138309", "933000120138318", "933000120138326", "933000120138317"))] <- as.POSIXct("2017-09-17", tz = "UTC")
+  return(x)})
+
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
 lapply(WFU_Olivier_co_test, function(x) summary(x$weanage))
 
@@ -754,11 +759,16 @@ lapply(WFU_Olivier_ox_test, function(x) summary(x$shipmentage)) #all seem okay; 
 
 
 # # add age of wean and check consistency
+### notes from Angela at WFU at 11/14/2019 11:32 AM "The one from Oxycodone had a wean date of 8-24-18."
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x) {
+  x$dow[which(x$rfid == "933000320046005")] <- as.POSIXct("2018-08-24", tz = "UTC")
+  return(x)})
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, weanage = as.numeric(dow - dob))
 lapply(WFU_Olivier_ox_test, function(x) summary(x$weanage))
 
 # # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, cbind, comment = NA, resolution = NA)
+
 
 # rename all sheets 
 names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames

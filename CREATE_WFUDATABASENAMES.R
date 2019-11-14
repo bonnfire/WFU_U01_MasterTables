@@ -9,7 +9,6 @@ shipments <- lapply(shipments, function(x){
   x$cohort <- ifelse(nchar(x$cohort) > 1, x$cohort, gsub('([[:digit:]]{1})$', '0\\1', x$cohort)) 
   x$litternumber = as.numeric(x$litternumber)
   x$littersize = as.numeric(x$littersize)
-  x$numberofsiblings = 
   return(x)
 })
 shipments_df <- rbindlist(shipments, id = "U01", fill = T)
