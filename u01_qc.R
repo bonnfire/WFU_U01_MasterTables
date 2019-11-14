@@ -688,7 +688,7 @@ WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T
 WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>% 
   dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Naive", comment)) %>% 
   dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
-# to check if all naive cases were identified: all 15 were 
+# to check if all naive cases were identified: all 15 in each cohort (5-9) were found
 # WFU_Olivier_co_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
 
 # Outstanding issues: 

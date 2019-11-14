@@ -5,14 +5,28 @@ names(shipments_df)
 pdf("WFU_QC_PLOTS.pdf")
 
 ggplot(shipments_df, aes(sex)) +
-  geom_histogram(stat = "count") + 
+  geom_histogram(stat = "count") + d
   facet_grid(~U01) + 
   labs(title = "Sex of Rats by U01, from WFU shipments")
 
 ggplot(shipments_df, aes(cohort)) +
-  geom_histogram(stat = "count") + 
+  geom_bar(stat = "count") + 
   facet_grid(~U01) + 
-  labs(title = "Size of Cohorts by U01, from WFU shipments")
+  labs(title = "Size of Cohorts by U01, from WFU shipments") + 
+  theme(axis.text=element_text(size=8, angle = 45)) +
+  geom_text(stat='count', aes(label=..count..), size=3, vjust=-1)
+
+###############################################################
+# create data object with data combined with shipments info
+# shipments_df
+
+ggplot(shipments_df, aes(cohort, fill = source)) +
+  geom_bar(stat = "count", position='dodge') + 
+  facet_grid(~U01) + 
+  labs(title = "Size of Cohorts by U01, from WFU shipments and Data Received") + 
+  theme(axis.text=element_text(size=8, angle = 45)) +
+  geom_text(stat='count', aes(label=..count..), size=3, vjust=-1)
+
 
 ggplot(shipments_df, aes(dames, sires)) +
   geom_point(aes(color = U01)) + 
@@ -40,7 +54,7 @@ ggplot(shipments_df, aes(shipmentdate)) +
 ggplot(shipments_df, aes(shipmentdate)) +
   geom_density(aes(color = U01), bins = 45) + 
   # facet_grid(~U01) + 
-  labs(title = "***************8Another way to graph... Shipment Dates Timeline by U01, from WFU shipments") + 
+  labs(title = "***************Another way to graph... Shipment Dates Timeline by U01, from WFU shipments") + 
   theme(axis.text=element_text(size=8, angle = 45)) + 
   scale_x_datetime(date_breaks = "25 day")
 
@@ -62,6 +76,21 @@ ggplot(shipments_df, aes(littersize)) +
   # aes(color = litternumber)
   facet_grid(~U01) + 
   labs(title = "Litter size by U01, from WFU shipments") 
+
+shipments_df %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(sires, dames, cohort, n, U01) %>% 
+  ungroup() %>% 
+  rename("pairsbycohort"="n") %>% 
+  group_by(sires,dames) %>% 
+  add_count() %>% 
+  rename("pairsbyexp"="n") %>% 
+  dplyr::filter(pairsbycohort != pairsbyexp) %>% 
+  unique() %>% 
+  data.frame() %>% 
+  gridExtra::grid.table()
+
 
 # ggplot(shipments_df, aes(littersize, group = cohort, fill = cohort)) +
 #   geom_histogram(stat = "count") +
