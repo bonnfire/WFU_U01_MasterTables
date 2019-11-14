@@ -106,29 +106,41 @@ ggplot(shipments_df, aes(weanage, shipmentage)) +
 
 dev.off()
 
-library(grid)
-library(gridExtra)
-pdf("WFU_QC_Siblings.pdf")
+########################################################
+###### QC Number of siblings
+########################################################
 
-#grid::grid.newpage()
+
 
 wfu_shipmentsiblings_allexps <- shipments_df %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
   ungroup() %>% 
-  rename("pairsbycohort"="n") %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
   group_by(sires,dames, U01) %>% 
   add_count() %>% 
-  rename("pairsbyexp"="n") %>% 
-  dplyr::filter(pairsbycohort != pairsbyexp) %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
   unique() %>% 
   arrange(U01, sires) %>%
   data.frame() 
+
+wfu_shipmentsiblings_byu01 <- wfu_shipmentsiblings_allexps %>%
+  ungroup() %>% 
+  group_by(U01) %>% 
+  count()
+
+wfu_shipmentsiblings_byu01$U01 <- mgsub::mgsub(wfu_shipmentsiblings_byu01$U01,
+                               c("Olivier_Co", "Olivier_Oxy"),
+                               c("Olivier Cocaine", "Olivier Oxycodone"))
+
+# knitr::kable(wfu_shipmentsiblings_allexps)
+
 # %>% 
 #   gridExtra::grid.table(rows = NULL, theme = gridExtra::ttheme_default(base_size = 8))
 
-tg <- tableGrob(wfu_shipmentsiblings_allexps, rows = seq_len(nrow(wfu_shipmentsiblings_allexps))) 
+tg <- tableGrob(wfu_shipmentsiblings_allexps, rows = seq_len(nrow(wfu_shipmentsiblings_allexps)))
 
 fullheight <- convertHeight(sum(tg$heights), "cm", valueOnly = TRUE)
 margin <- unit(0.51,"in")
@@ -137,7 +149,7 @@ a4height <- 29.7 - margin_cm
 nrows <- nrow(tg)
 npages <- ceiling(fullheight / a4height)
 
-heights <- convertHeight(tg$heights, "cm", valueOnly = TRUE) 
+heights <- convertHeight(tg$heights, "cm", valueOnly = TRUE)
 rows <- cut(cumsum(heights), include.lowest = FALSE,
             breaks = c(0, cumsum(rep(a4height, npages))))
 
@@ -145,13 +157,28 @@ groups <- split(seq_len(nrows), rows)
 
 gl <- lapply(groups, function(id) tg[id,])
 
+pdf("WFU_QC_Siblings.pdf", paper = "a4", width = 0, height = 0)
+
+grid.table(wfu_shipmentsiblings_byu01)
+df<-data.frame(blurb = c("In WFU's rat shipments to U01 projects, we expect each cohort to represent different generations or a separate set of sire-dame pairs. 
+Therefore, we would expect to find the number of rats from the same sire-dame pair in one cohort to be equal to the the number of rats from the same sire-dame pair in the overall U01. 
+We have found that to not be the case for four of the U01's. The first figure summarizes the number of cases, while the second figure provides detailed information of each case."))
+
+d = sapply(lapply(df$blurb, strwrap, width=50), paste, collapse="\n")
+grid.table(d)
+
+grid.text("Animals. Below you will find ", x = unit(0.25, "npc"), y = unit(1.25, "npc"), gp=gpar(fontsize=12, col="black"))
+
 for(page in seq_len(npages)){
   grid.newpage()
   grid.rect(width=unit(21,"cm") - margin,
             height=unit(29.7,"cm")- margin)
   grid.draw(gl[[page]])
 }
-## alternative to explicit loop:
-## print(marrangeGrob(grobs=gl, ncol=1, nrow=1, top=NULL))
+
+
+
+# alternative to explicit loop:
+# print(marrangeGrob(grobs=gl, ncol=1, nrow=1, top=NULL))
 dev.off()
 
