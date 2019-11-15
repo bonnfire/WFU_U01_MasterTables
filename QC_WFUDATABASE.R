@@ -44,6 +44,8 @@ ggplot(shipments_df, aes(dob)) +
   theme(axis.text=element_text(size=10, angle = 45)) + 
   scale_x_datetime(date_breaks = "25 day")
 
+
+#### clean up here
 # look at birthday and litternumber? 
 # expect: birthday should be consistent across sire dame pair and litternumber
 shipments_df[,c('dames','sires', 'litternumber')] # select columns to check duplicates
