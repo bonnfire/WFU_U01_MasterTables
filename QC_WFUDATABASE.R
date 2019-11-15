@@ -45,7 +45,12 @@ ggplot(shipments_df, aes(dob)) +
   scale_x_datetime(date_breaks = "25 day")
 
 # look at birthday and litternumber? 
-
+# expect: birthday should be consistent across sire dame pair and litternumber
+shipments_df[,c('dames','sires', 'litternumber')] # select columns to check duplicates
+siblings_insamelitter <- shipments_df[duplicated(shipments_df[,c('dames','sires', 'litternumber')]) | duplicated(shipments_df[,c('dames','sires', 'litternumber')], fromLast=TRUE),]
+siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% select(U01, uniquebday) %>% unique()
+siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% View()
+# expecting only 1 but we see some two values
 
 ggplot(shipments_df, aes(shipmentdate)) +
   geom_histogram(aes(fill = U01), bins = 45, alpha = 0.5) + 
@@ -62,6 +67,10 @@ ggplot(shipments_df, aes(shipmentdate)) +
   theme(axis.text=element_text(size=8, angle = 45)) + 
   scale_x_datetime(date_breaks = "25 day")
 
+# pick up from here 
+shipments_df %>% 
+  group_by(U01, sires, dames, litternumber) %>% 
+  count() %>% arrange(desc(n))
 
 ggplot(shipments_df, aes(litternumber)) +
   geom_histogram(stat = "count") +
@@ -100,6 +109,32 @@ ggplot(shipments_df, aes(rack, shipmentbox)) +
   # aes(color = litternumber)
   facet_grid(~U01) + 
   labs(title = "************Rack vs box by U01, from WFU shipments") 
+
+shipments_df %>% 
+  group_by(U01, cohort, shipmentbox, rack) %>% 
+  count() %>% 
+ggplot(aes(n)) +
+  geom_histogram() +
+  facet_grid(~U01) + 
+  labs(title = "Number of rats per rack per shipment box by U01, from WFU shipments") 
+# shipments_df %>% group_by(U01, cohort, shipmentbox) %>% count() %>% ungroup() %>% group_by(U01) %>% select(U01, n) %>% summarize(mean = mean(n), min = min(n), max = max(n))
+
+shipments_df %>% 
+  group_by(U01, cohort, shipmentbox) %>% 
+  count() %>% 
+  ggplot(aes(as.factor(n))) +
+  geom_histogram(stat = "count") +
+  facet_grid(~U01) + 
+  labs(title = "Number of rats per shipment box by U01, from WFU shipments") 
+# shipments_df %>% group_by(U01, cohort, shipmentbox) %>% count() %>% ungroup() %>% group_by(U01) %>% select(U01, n) %>% summarize(mean = mean(n), min = min(n), max = max(n))
+
+shipments_df %>% 
+  group_by(U01, cohort, shipmentbox) %>% 
+  count() %>% 
+  ggplot(aes(cohort, fill = as.factor(n))) +
+  geom_bar() +
+  facet_grid(~U01) + 
+  labs(title = "** Can delete ** Number of rats per shipment box per cohort by U01, from WFU shipments") 
 
 ggplot(shipments_df, aes(weanage, shipmentage)) +
   geom_jitter() +
