@@ -44,6 +44,9 @@ ggplot(shipments_df, aes(dob)) +
   theme(axis.text=element_text(size=10, angle = 45)) + 
   scale_x_datetime(date_breaks = "25 day")
 
+# look at birthday and litternumber? 
+
+
 ggplot(shipments_df, aes(shipmentdate)) +
   geom_histogram(aes(fill = U01), bins = 45, alpha = 0.5) + 
   # facet_grid(~U01) + 
@@ -99,7 +102,7 @@ ggplot(shipments_df, aes(rack, shipmentbox)) +
   labs(title = "************Rack vs box by U01, from WFU shipments") 
 
 ggplot(shipments_df, aes(weanage, shipmentage)) +
-  geom_point() +
+  geom_jitter() +
   # aes(color = litternumber)
   facet_grid(~U01) + 
   labs(title = "Age at shipment vs age at wean by U01, from WFU shipments") 
@@ -112,6 +115,7 @@ dev.off()
 
 # for shipment timeline graph
 wfu_shipmentsiblings_allexpswdate <- shipments_df %>% 
+  dplyr::filter(!comment %in% c("Naive", "Pregnant female")) %>%
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n, shipmentdate) %>% 
@@ -125,6 +129,7 @@ wfu_shipmentsiblings_allexpswdate <- shipments_df %>%
   
 # for details
 wfu_shipmentsiblings_allexps <- shipments_df %>% 
+  dplyr::filter(!comment %in% c("Naive", "Pregnant female")) %>%
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
