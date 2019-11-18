@@ -342,71 +342,10 @@ names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
 
+## 11/18 
+WFU_Jhou_13 <- u01.importxlsx("Mitchell Master Shipping Sheet.xlsx")
 
-## XX INCOMPLETE [PICK UP]
-# # validate date 
-QC(WFU_Jhou_test)
 
-# # automate the counts with purrr:map() 
-# # itirate through all designated columns in a list of df's
-# # validate pairings 
-map(WFU_Jhou_test, ~ count(., Sex))
-map(WFU_Jhou_test, ~ count(., Dames))
-map(WFU_Jhou_test, ~ count(., Sires))
-
-# # validate pairings (consider unique gender?)
-conds <- map(WFU_Jhou_test, ~ count(., Dames, Sires, Sex) %>%
-               subset(n!=1)) 
-
-# # subset the original data for these cases with gender
-# WFU_Jhou_problemsubset<- lapply(seq_along(WFU_Jhou_test), 
-#        function(i) subset(WFU_Jhou_test[[i]], Dames %in% conds[[i]]$Dames & Sires %in% conds[[i]]$Sires))
-WFU_Jhou_problemsubset <- map(WFU_Jhou_test, ~ group_by(.x, Dames, Sires, Sex) %>% 
-      filter(n() > 1))
-names(WFU_Jhou_problemsubset) <- names(WFU_Jhou_test)
-Jhou_listDF <- list("#1(6-5-18)"=WFU_Jhou_problemsubset[["#1(6-5-18)"]][,-(16:18)], 
-                    "#2(7-5-18)"=WFU_Jhou_problemsubset[["#2(7-5-18)"]],
-                    "#3(7-24-18)"=WFU_Jhou_problemsubset[["#3(7-24-18)"]],
-                    "#4(10-9-18)"=WFU_Jhou_problemsubset[["#4(10-9-18)"]],
-                    "#5(11-27-18)"=WFU_Jhou_problemsubset[["#5(11-27-18)"]],
-                    "#6(1-15-19)"=WFU_Jhou_problemsubset[["#6(1-15-19)"]],
-                    "#7(2-26-19)"=WFU_Jhou_problemsubset[["#7(2-26-19)"]],
-                    "#8(4-9-19)"=WFU_Jhou_problemsubset[["#8(4-9-19)"]],
-                    "#9(6-4-19)"=WFU_Jhou_problemsubset[["#9(6-4-19)"]],
-                    "#10(7-16-19)"=WFU_Jhou_problemsubset[["#10(7-16-19)"]],
-                    "#11(8-27-19)"=WFU_Jhou_problemsubset[["#11(8-27-19)"]])  
-     
-write.xlsx(Jhou_listDF, file = "Jhou_SiblingSubset.xlsx", append = T)
-
-# graphics for email
-Jhou_SameSexSiblings <- map(WFU_Jhou_test, ~ count(., Dames, Sires, Sex) %>%
-               subset(n!=1 & is.na(Dames) == F) %>% 
-               nrow)
-All_Jhou <- bind_rows(WFU_Jhou_test) %>% count(Dames, Sires) %>% subset(is.na(Dames) == F)
-ggplot(All_Jhou, aes(n)) + geom_bar() + ggtitle("All Jhou Shipments") +
-  xlab("Number of siblings in one shipment") + ylab("Count") + 
-  geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5),size=4)
-
-Jhou_UniqueParentPairs <- map(WFU_Jhou_test, ~ count(., Dames, Sires)) 
-ggplot(UniqueParents[[1]]) + geom_histogram(aes(n))
-
-Jhou_UniqueParentPairs %>% 
-  names() %>%
-  map(~ ggplot(Jhou_UniqueParentPairs) + geom_histogram(n))
-
-  df %>% gather(var,value) %>% 
-    ggplot(aes(x = value))+
-    geom_histogram()+
-    facet_wrap(~var)
-  
-# wo sex variable
-conds2 <- map(WFU_Jhou_test, ~ count(., Dames, Sires))
-map(conds2, ~ subset(., n > 2))
-
-# # validate litter count 
-
-# # validate dames and sires id
-map(WFU_Jhou_test, ~ subset(., Dames==Sires))
 
 ######################
 ######## MITCHELL ####
