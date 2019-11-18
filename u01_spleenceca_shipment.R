@@ -7,7 +7,7 @@ library(readxl)
 library(tidyxl)
 
 # install.packages('splitstackshape')
-# install.packages('janitor')
+# install.packages('janitor') 
 library(splitstackshape)
 library(janitor)
 library(stringr)
