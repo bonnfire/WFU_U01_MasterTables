@@ -5,13 +5,13 @@ names(shipments_df)
 pdf("WFU_QC_PLOTS.pdf")
 
 ggplot(shipments_df, aes(sex)) +
-  geom_histogram(stat = "count") + d
+  geom_histogram(stat = "count") + 
   facet_grid(~U01) + 
   labs(title = "Sex of Rats by U01, from WFU shipments")
 
 ggplot(shipments_df, aes(cohort)) +
   geom_bar(stat = "count") + 
-  facet_grid(~U01) + 
+  facet_grid(~U01, scales = "free") + 
   labs(title = "Size of Cohorts by U01, from WFU shipments") + 
   theme(axis.text=element_text(size=8, angle = 45)) +
   geom_text(stat='count', aes(label=..count..), size=3, vjust=-1)

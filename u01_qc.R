@@ -299,6 +299,9 @@ map(WFU_Kalivas_test, ~ count(., dames, sires, sex) %>%
 ######################
 WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 
+## 11/18 
+WFU_Jhou[[12]] <- u01.importxlsx("Jhou #13 Shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+names(WFU_Jhou)[12] <- "#12(11-19-2019)"
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
@@ -313,6 +316,8 @@ WFU_Jhou_test[[2]] <- WFU_Jhou_test[[2]] %>% mutate("shipmentdate" = as.POSIXct(
 # # checking id vars
 idcols <- c("accessid", "rfid")
 unique.values.length.by.col(WFU_Jhou_test, idcols) 
+# length(unique(WFU_Jhou_test[[x]]$idcols)) == nrow(WFU_Jhou_test[[x]]) 
+# WFU_Jhou_test[[12]][duplicated(WFU_Jhou_test[[12]]$accessid),] # returns two
 
 # # checking date consistency 
 WFU_Jhou_test <- uniform.date.testingu01(WFU_Jhou_test)
@@ -329,21 +334,26 @@ lapply(WFU_Jhou_test, function(x) summary(x$weanage))
 WFU_Jhou_test <- lapply(WFU_Jhou_test, cbind, comment = NA, resolution = NA)
 # # checking the number of rfid digits 
 
+# check number of rfid digits
 lapply(WFU_Jhou_test, function(x){
   x %>% 
     mutate(rfid_digits = nchar(rfid)) %>% 
-    filter(rfid_digits != 15)
+    dplyr::filter(rfid_digits != 15)
 })
+
+# check number of rat siblings in each cohort
+
+
+# make sure that cohort pairs don't spill into another 
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
 WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
+
+# final touches: clean up names 
 names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
-
-## 11/18 
-WFU_Jhou_13 <- u01.importxlsx("Mitchell Master Shipping Sheet.xlsx")
 
 
 
