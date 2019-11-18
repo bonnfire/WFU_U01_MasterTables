@@ -12,15 +12,32 @@ library(splitstackshape)
 library(janitor)
 library(stringr)
 
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
+
+###########################
+###### JHOU ###############
+###########################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster/TissueShipments")
+jhou_spleen_raw <- read_excel(path = "Jhou U01 Spleen and Ceca shipment.xlsx", col_names = F)
+jhou_spleen_test <- jhou_spleen_raw
+names(jhou_spleen_test) <- jhou_spleen_raw[1,] %>% as.character()
+jhou_spleen_test <- jhou_spleen_test[-1,]
+names(jhou_spleen_test) <- mgsub::mgsub(names(jhou_spleen_test),
+                               c(" |\\.", "#", "Transponder ID", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                               c("", "Number", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
+  tolower()
+
 
 ###########################
 ###### OLIVIER ############
 ###########################
 
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
 
+###########################
+###### OLIVIER ############
+###########################
 olivier_spleen_raw <- read_excel(path = "Olivier Spleens Oxy and Coc 91319.xlsx", col_names = F)
-olivier_spleen_cells_raw <- tidyxl::xlsx_cells(path = "Olivier Spleens Oxy and Coc 91319.xlsx")
+olivier_spleen_cells_raw <- tidyxl::xlsx_cells(path = "Olivier Spleens Oxy and Coc 91319.xlsx/TissueShipments")
 olivier_spleen_formats_raw <- xlsx_formats(path = "Olivier Spleens Oxy and Coc 91319.xlsx")
 
 # parse through indices using colors, couldn't work because of two observations 
