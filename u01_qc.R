@@ -301,7 +301,7 @@ WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 
 ## 11/18 
 WFU_Jhou[[12]] <- u01.importxlsx("Jhou #13 Shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
-names(WFU_Jhou)[12] <- "#12(11-19-2019)"
+names(WFU_Jhou)[12] <- "#13(11-19-2019)" ##### XX ADDRESS MISSING COHORT 12 ISSUE WITH OKSANA
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
@@ -318,6 +318,8 @@ idcols <- c("accessid", "rfid")
 unique.values.length.by.col(WFU_Jhou_test, idcols) 
 # length(unique(WFU_Jhou_test[[x]]$idcols)) == nrow(WFU_Jhou_test[[x]]) 
 # WFU_Jhou_test[[12]][duplicated(WFU_Jhou_test[[12]]$accessid),] # returns two
+WFU_Jhou_test[[12]][which(WFU_Jhou_test[[12]]$rfid == "933000320186901"),]$accessid <- "75010_2" # based on WFU (Angela) email from 11/18/2019 10:05 AM: "Sorry, it was a copy and paste error. They are the same except the last digit. 933000320186901 is actually 75010_2. I have corrected it on this end so all you need to do is change the last digit from 1 to 2." 
+
 
 # # checking date consistency 
 WFU_Jhou_test <- uniform.date.testingu01(WFU_Jhou_test)
@@ -341,10 +343,6 @@ lapply(WFU_Jhou_test, function(x){
     dplyr::filter(rfid_digits != 15)
 })
 
-# check number of rat siblings in each cohort
-
-
-# make sure that cohort pairs don't spill into another 
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Jhou_test, "coatcolor")
@@ -354,6 +352,11 @@ WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
 names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
+
+
+# check number of rat siblings in each cohort # cohort 13 has all two siblings
+# and 
+# make sure that cohort pairs don't spill into another # no new cases from cohort 13
 
 
 

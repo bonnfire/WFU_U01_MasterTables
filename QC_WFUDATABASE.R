@@ -242,7 +242,7 @@ grid.draw(default_grob)
 ggplot(wfu_shipmentsiblings_allexpswdate, aes(U01, shipmentdate)) +
   geom_count()+ 
   labs(title = "Shipment Dates Timeline by U01, from WFU shipments") + 
-  scale_y_datetime(date_breaks = "25 day")
+  scale_y_datetime(date_breaks = "25 day") 
 
 for(page in seq_len(npages)){
   grid.newpage()
