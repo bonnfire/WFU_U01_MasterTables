@@ -52,6 +52,8 @@ shipments_df[,c('dames','sires', 'litternumber')] # select columns to check dupl
 siblings_insamelitter <- shipments_df[duplicated(shipments_df[,c('dames','sires', 'litternumber')]) | duplicated(shipments_df[,c('dames','sires', 'litternumber')], fromLast=TRUE),]
 siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% select(U01, uniquebday) %>% unique()
 siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% View()
+
+## pick up from here: siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob), group = rep(letters, length.out = n()), ) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% View()
 # expecting only 1 but we see some two values
 
 ggplot(shipments_df, aes(shipmentdate)) +
@@ -183,8 +185,10 @@ wfu_shipmentsiblings_allexps <- shipments_df %>%
 # for overview
 wfu_shipmentsiblings_byu01 <- wfu_shipmentsiblings_allexps %>%
   ungroup() %>% 
-  group_by(U01) %>% 
-  count()
+  select(U01, sires, dames) %>%
+  distinct() %>% # count was each 2, so every incident only appeared in one other cohort
+  count(U01)
+
 # clearer overview text 
 wfu_shipmentsiblings_byu01$U01 <- mgsub::mgsub(wfu_shipmentsiblings_byu01$U01,
                                c("Olivier_Co", "Olivier_Oxy"),
@@ -230,7 +234,8 @@ pdf("WFU_QC_Siblings.pdf", paper = "a4", width = 0, height = 0)
 
 df<-data.frame(blurb = c("In WFU's rat shipments to U01 projects, we expect each cohort to represent different generations or a separate set of sire-dame pairs. 
 Therefore, we would expect to find the number of rats from the same sire-dame pair in one cohort to be equal to the the number of rats from the same sire-dame pair in the overall U01. 
-We have found that to not be the case for four of the U01's. The first figure and the second figure summarize the number of cases along with the timeline of shipments, while the last figure provides detailed information of each case. "))
+We have found that to not be the case for four of the U01's. The first figure and the second figure summarize the number of cases along with the timeline of shipments, while the last figure provides detailed information of each case.
+                         In the first two figures, one case is defined as the sire-dame pair itself that was repeated across cohorts; the data only observed duplicates at the time this was compiled. In other words, pairs were used in at most two cohorts. "))
 d = sapply(lapply(df$blurb, strwrap, width=70), paste, collapse="\n")
 grid.table(d)
 
