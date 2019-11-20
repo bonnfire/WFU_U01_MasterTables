@@ -52,8 +52,13 @@ shipments_df[,c('dames','sires', 'litternumber')] # select columns to check dupl
 siblings_insamelitter <- shipments_df[duplicated(shipments_df[,c('dames','sires', 'litternumber')]) | duplicated(shipments_df[,c('dames','sires', 'litternumber')], fromLast=TRUE),]
 siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% select(U01, uniquebday) %>% unique()
 siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% View()
+siblings_insamelitter %>% group_by(dames,sires,litternumber,littersize) %>% mutate(uniquelittersize = n_distinct(littersize)) %>% View()
+split(siblings_insamelitter, dplyr::group_indices(dames,sires,litternumber))
 
-## pick up from here: siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob), group = rep(letters, length.out = n()), ) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% View()
+
+## pick up from here: 
+nonuniquebdaywfu <- siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob), group = rep(letters, length.out = n()), ) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber)
+
 # expecting only 1 but we see some two values
 
 ggplot(shipments_df, aes(shipmentdate)) +
