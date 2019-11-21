@@ -1,5 +1,4 @@
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
-rm(list = ls())
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
 
 # Load libraries
 library(tidyverse) #loads dplyr, tidyr, ggplot2, purrr, etc

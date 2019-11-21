@@ -265,3 +265,14 @@ for(page in seq_len(npages)){
 # print(marrangeGrob(grobs=gl, ncol=1, nrow=1, top=NULL))
 dev.off()
 
+
+# check the number of males and females in the shipment boxes
+shipments_df %>% 
+  dplyr::filter(!comment %in% c("Naive", "Pregnant female")) %>% 
+  select(U01, shipmentdate, rack, sex) %>% 
+  unique() %>% 
+  group_by(U01, shipmentdate, rack) %>% 
+  count(sex) %>% 
+  arrange(rack) %>% 
+  dplyr::filter(n!=1) # PASS check and tried with removing shipment date as variable and passed too
+
