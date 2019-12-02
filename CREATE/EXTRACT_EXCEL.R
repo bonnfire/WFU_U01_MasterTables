@@ -556,7 +556,7 @@ str(WFU_Mitchell_test)
 ######################
 ## Olivier(Cocaine) ##
 ######################
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
 WFU_Olivier_co <- u01.importxlsx("UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx")
 
 # following instructions from Angela Beeson at WFU :
@@ -648,11 +648,16 @@ WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T
 # append naive/scrub comment to dataframe
 # # add comment of scrubs for matching rfid 
 WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>% 
-  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Scrub", comment)) %>% 
+  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Scrub", WFU_Olivier_co_test_df$comment)) %>% 
   dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
 # to check if all naive cases were identified: all 15 in each cohort (5-9) were found
 # WFU_Olivier_co_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
 
+# check the sexes 
+WFU_Olivier_co_test_df %>%
+  dplyr::filter(grepl("^HS", labanimalid)) %>% 
+  mutate(sex_fromid = substr(labanimalid, 3, 3)) %>% 
+  dplyr::filter(sex_fromid != sex ) # nothing wrong 
 # Outstanding issues: 
 # between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
 # diff bw labanimalid vs labanimalnumber 
