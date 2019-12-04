@@ -45,14 +45,19 @@ uniform.var.names.testingu01 <- function(df){
 
 uniform.coatcolors <- function(df){
   lapply(seq_along(df), function(i) {
-    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
-                                      c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood", "[A|a]lbino"), 
-                                      c("BROWN", "BLACK", "HOOD", "ALBINO"))
-    df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
-    df[[i]]$coatcolor <- toupper(df[[i]]$coatcolor)
+    df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", mgsub::mgsub(df[[i]]$coatcolor, 
+                                                                        c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood|[H|h]hod", "[A|a]lbino"), 
+                                                                        c("BROWN", "BLACK", "HOOD", "ALBINO"))) 
+      
+    #   mgsub::mgsub(df[[i]]$coatcolor, 
+    #                                   c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD\\.|[H|h]ood", "[A|a]lbino"), 
+    #                                   c("BROWN", "BLACK", "HOOD", "ALBINO"))
+    # df[[i]]$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", df[[i]]$coatcolor)
+    #df[[i]]$coatcolor <- toupper(df[[i]]$coatcolor)
     df[[i]]
   })
 } # function should be used for other cases
+
 
 uniform.date.testingu01 <- function(df){
   lapply(seq_along(df), function(i) {
@@ -411,6 +416,7 @@ lapply(WFU_Mitchell_test, function(x){
 
 # # checking coat color consistency
 # before unique.values.by.col(WFU_Mitchell_test, "coatcolor")
+
 WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
 # after unique.values.by.col(WFU_Mitchell_test, "coatcolor")
 
@@ -533,14 +539,6 @@ map(WFU_Mitchell_test, ~ count(., Sires))
 # check coatcolor 
 lapply(WFU_Mitchell_test, function(df)
   sapply(df["coatcolor"], unique))
-uniform.coatcolors <- function(df){
-  lapply(seq_along(df), function(i) {
-    df[[i]]$coatcolor <- mgsub::mgsub(df[[i]]$coatcolor, 
-                                   c("BRN", "BLK", "HHOD"), 
-                                   c("BROWN", "BLACK", "HOOD"))
-    df[[i]]
-  })
-} 
 WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
 # check coatcolor consistency with
 # lapply(WFU_Mitchell_test, function(df)
