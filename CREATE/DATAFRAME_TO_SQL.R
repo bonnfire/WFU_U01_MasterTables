@@ -12,6 +12,10 @@ if (dbExistsTable(con, c("u01_tom_jhou","jhou_wfu_master")))
 # write data frame to database
 dbWriteTable(con, c("u01_tom_jhou","jhou_wfu_master"), value = WFU_Jhou_test_df, row.names = FALSE)
 
+dbWriteTable(con, c("u01_peter_kalivas","kalivas_wfu_master"), value = WFU_Jhou_test_df, row.names = FALSE)
+
+
+# trial query, joining two tables
 sql <- " 
     select sp.ticker, sp.date, sp.price
     from stock_prices sp
