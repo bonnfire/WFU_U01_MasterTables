@@ -1,9 +1,9 @@
-shipments <- list("Kalivas_Italy" = glimpse(WFU_Kalivas_Italy_test_df), 
-                    "Kalivas" = glimpse(WFU_Kalivas_test_df),
-                    "Jhou" = glimpse(WFU_Jhou_test_df),
-                    "Mitchell" = glimpse(WFU_Mitchell_test_df),
-                    "Olivier_Co" = glimpse(WFU_Olivier_co_test_df), 
-                    "Olivier_Oxy" = glimpse(WFU_Olivier_ox_test_df))
+# shipments <- list("Kalivas_Italy" = glimpse(WFU_Kalivas_Italy_test_df), 
+#                     "Kalivas" = glimpse(WFU_Kalivas_test_df),
+#                     "Jhou" = glimpse(WFU_Jhou_test_df),
+#                     "Mitchell" = glimpse(WFU_Mitchell_test_df),
+#                     "Olivier_Co" = glimpse(WFU_Olivier_co_test_df), 
+#                     "Olivier_Oxy" = glimpse(WFU_Olivier_ox_test_df))
 
 shipments <- list("Kalivas_Italy" = WFU_Kalivas_Italy_test_df, 
                   "Kalivas" = WFU_Kalivas_test_df,
@@ -23,16 +23,16 @@ shipments <- lapply(shipments, function(x){
 shipments_df <- rbindlist(shipments, id = "U01", fill = T)
 sapply(shipments_df, unique) # check if all formats are consistent # NOT YET!!
 
-shipments_df %>% dplyr::filter(nchar(rfid) != 15)
-
-
+shipments_df <- shipments_df %>% dplyr::filter(nchar(rfid) == 15) # XXXX excluding 5 cases for now, all from olivier's labs 
 # experiments <- mapply(append, experiments, "master_table") # by apurva's request
-
+shipments <- split(shipments_df, as.factor(shipments_df$U01))
 
 save(shipments, file = "shipments.RData")
+
 openxlsx::write.xlsx(shipments$Mitchell[2,], file = "u01_masterfile_template.xlsx")
 
 save(shipments_df, file = "shipmentswithU01col.RData")
+write.csv(shipments_df, file = "WFU_U01_shipments.csv")
 
 
 
