@@ -10,17 +10,26 @@ if (dbExistsTable(con, c("u01_tom_jhou","jhou_wfu_master")))
   dbRemoveTable(con, c("u01_tom_jhou","jhou_wfu_master"))
 
 # write data frame to database
-dbWriteTable(con, c("u01_tom_jhou","jhou_wfu_master"), value = WFU_Jhou_test_df, row.names = FALSE)
-
-dbWriteTable(con, c("u01_peter_kalivas","kalivas_wfu_master"), value = WFU_Jhou_test_df, row.names = FALSE)
-
+dbWriteTable(con, c("u01_tom_jhou","jhou_wfu_master"), value = shipments[["Jhou"]], row.names = FALSE)
 
 # trial query, joining two tables
 sql <- " 
-    select sp.ticker, sp.date, sp.price
-    from stock_prices sp
-    join temp_tickers tt on sp.ticker = tt.ticker
-    where date between '2000-01-01' and '2015-07-08'
+    select u01
+    from u01_tom_jhou.jhou_wfu_master 
+    where cohort='01'
 "
-
 results <- dbGetQuery(con, sql)
+
+
+dbDisconnect(con)
+
+# 
+con <- dbConnect(
+  drv,
+  dbname='U01',
+  user='postgres',
+  password='postgres',
+  options="-c search_path=u01_peter_kalivas"
+)
+
+dbWriteTable(con, c("u01_peter_kalivas","kalivas_wfu_master"), value = WFU_Kalivas_test_df, row.names = FALSE)

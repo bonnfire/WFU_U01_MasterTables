@@ -20,7 +20,7 @@ shipments <- lapply(shipments, function(x){
   x$littersize = as.numeric(x$littersize)
   return(x)
 })
-shipments_df <- rbindlist(shipments, id = "U01", fill = T)
+shipments_df <- rbindlist(shipments, id = "u01", fill = T)
 sapply(shipments_df, unique) # check if all formats are consistent # NOT YET!!
 
 shipments_df <- shipments_df %>% dplyr::filter(nchar(rfid) == 15) # XXXX excluding 5 cases for now, all from olivier's labs 
