@@ -293,9 +293,8 @@ WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fi
 ## Kalivas(Heroine) ##
 ######################
 WFU_Kalivas <- u01.importxlsx("MUSC (Kalivas) Master Shipping.xlsx")
-WFU_Kalivas_updated3 <- u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")
 # As per email chain from August and September, the shipment from the third cohort of animals needs to be merged into Kalivas master sheets.
-WFU_Kalivas[[3]] <- WFU_Kalivas_updated3[[1]]
+WFU_Kalivas[[3]] <-  u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")$Kalivas
 
 WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
 WFU_Kalivas_test[[1]] <- WFU_Kalivas_test[[1]] %>% 
