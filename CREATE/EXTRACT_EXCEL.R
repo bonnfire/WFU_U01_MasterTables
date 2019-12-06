@@ -258,7 +258,7 @@ unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols)
 
 # add resolution section XX can I assume that these are ignorable??? 
 
-names(WFU_Kalivas_Italy_test) <- names(WFU_Kalivas_Italy)
+names(WFU_Kalivas_Italy_test) <- str_pad(seq(1:length(WFU_Kalivas_Italy_test)), 2, pad = "0")
 
 WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fill = T)
 
