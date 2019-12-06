@@ -256,6 +256,33 @@ idcols <- c("accessid", "rfid")
 unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
 # cleared out the scrubs and comments 
 
+
+## check no siblings from prev cohort 
+WFU_Kalivas_Italy_test_df %>% mutate(U01 = "Kalivas_Italy") %>% dplyr::filter(cohort == "04") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
+
+## check no same sex siblings (diff litter)
+WFU_Kalivas_Italy_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
+
+## check no same sex littermates (same litter)
+WFU_Kalivas_Italy_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_Kalivas_Italy_test_df %>% dplyr::filter(cohort == "04") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_Kalivas_Italy_test_df %>% mutate(U01 = "Kalivas_Italy") %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) 
+
 # add resolution section XX can I assume that these are ignorable??? 
 
 names(WFU_Kalivas_Italy_test) <- str_pad(seq(1:length(WFU_Kalivas_Italy_test)), 2, pad = "0")
