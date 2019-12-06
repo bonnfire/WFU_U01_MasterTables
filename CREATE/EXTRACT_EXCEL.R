@@ -254,7 +254,11 @@ WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, function(x){
 }) 
 idcols <- c("accessid", "rfid")
 unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
+
 # cleared out the scrubs and comments 
+names(WFU_Kalivas_Italy_test) <- str_pad(seq(1:length(WFU_Kalivas_Italy_test)), 2, pad = "0")
+
+WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fill = T)
 
 
 ## check no siblings from prev cohort 
@@ -285,17 +289,14 @@ WFU_Kalivas_Italy_test_df %>% mutate(U01 = "Kalivas_Italy") %>% dplyr::filter(co
 
 # add resolution section XX can I assume that these are ignorable??? 
 
-names(WFU_Kalivas_Italy_test) <- str_pad(seq(1:length(WFU_Kalivas_Italy_test)), 2, pad = "0")
-
-WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fill = T)
-
 ######################
 ## Kalivas(Heroine) ##
 ######################
 WFU_Kalivas <- u01.importxlsx("MUSC (Kalivas) Master Shipping.xlsx")
 # As per email chain from August and September, the shipment from the third cohort of animals needs to be merged into Kalivas master sheets.
 WFU_Kalivas[[3]] <-  u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")$Kalivas
-
+WFU_Kalivas[[4]] <- u01.importxlsx("MUSC (Kalivas) Shipping sheet #4.xlsx")$Kalivas
+WFU_Kalivas[[5]] <-  u01.importxlsx("MUSC (Kalivas)#5 Shipping Sheet.xlsx")$Kalivas
 WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
 WFU_Kalivas_test[[1]] <- WFU_Kalivas_test[[1]] %>% 
   select(-pairnumber)
@@ -323,24 +324,46 @@ WFU_Kalivas_test <- lapply(WFU_Kalivas_test, cbind, comment = NA, resolution = N
 lapply(WFU_Kalivas_test, function(x){
   x %>% 
     mutate(rfid_digits = nchar(rfid)) %>% 
-    filter(rfid_digits != 15)
+    dplyr::filter(rfid_digits != 15)
 })
 
 # # checking coat color consistency
 unique.values.by.col(WFU_Kalivas_test, "coatcolor")
 WFU_Kalivas_test <- uniform.coatcolors(WFU_Kalivas_test)
 
-names(WFU_Kalivas_test) <- names(WFU_Kalivas)
+# assign cohort numbers to list and create df
+names(WFU_Kalivas_test) <-  str_pad(seq(1:length(WFU_Kalivas_test)), 2, pad = "0")
 
 WFU_Kalivas_test_df <- rbindlist(WFU_Kalivas_test, id = "cohort", fill = T)
 
 
-## XX how do we want to use this data? 
-# # parent pairs
-map(WFU_Kalivas_test, ~ count(., dames, sires, sex) %>%
-      subset(n!=1 && is.na(dames) == F))
+## check no siblings from prev cohort 
+WFU_Kalivas_test_df %>% mutate(U01 = "Kalivas") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "04") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
 
-# # number of parent pairs
+## check no same sex siblings (diff litter)
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
+
+## check no same sex littermates (same litter)
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) 
+
 
 ######################
 ######## JHOU ########
