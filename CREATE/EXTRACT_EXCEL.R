@@ -179,6 +179,8 @@ names(WFU_Flagel_test) <- names(WFU_Flagel)
 ### Kalivas(ITALY) ###
 ######################
 WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
+WFU_Kalivas_Italy[[4]] <- u01.importxlsx("Italy #4 Shipping sheet.xlsx")$Italy
+WFU_Kalivas_Italy[[5]] <- u01.importxlsx("Italy #5 Shipping sheet.xlsx")$Italy
 WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
 
 # create the naive dataset before removing it and clean up naive dataset (pilot 15 rats in cohort 2)
@@ -191,18 +193,16 @@ WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
 # to do: add the shipment and wean ages either as separate function or integrate into the function above
   
 # experiment specific: second cohort requires remove additional 15 rats sent to italy note because they are pilot rats 
-WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
+
+# 12/6 unsure about removing scrubs now; just comment
+
+# WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
+
 # removeallnarow <- function(df){
 #   ind <- apply(df, 1, function(x) all(is.na(x)))
 #   df <- df[ !ind, ]
 # } # remove rows with all na
 # WFU_Kalivas_Italy_test[[2]] <- removeallnarow(WFU_Kalivas_Italy_test[[2]]) # might not actually need this
-
-# # checking id vars
-idcols <- c("accessid", "rfid")
-unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
-## doesn't have labanimalnumber
-
 
 # # checking date consistency 
 WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
@@ -220,7 +220,7 @@ lapply(WFU_Kalivas_Italy_test, function(x) summary(x$weanage))
 lapply(WFU_Kalivas_Italy_test, function(x){
   x %>% 
     mutate(rfid_digits = nchar(rfid)) %>% 
-    filter(rfid_digits != 15)
+    dplyr::filter(rfid_digits != 15)
 })
 
 # # checking coat color consistency
@@ -229,14 +229,32 @@ lapply(WFU_Kalivas_Italy_test, function(df)
 
 WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
 
-# add comment section (esp for delayed shipping day)
+# add comment section (esp for delayed shipping day and to add scrub note for 15 animals in co2)
 WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
+WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, function(x){
+  x <- x %>% 
+    mutate(comment = ifelse(rfid %in% rbindlist(WFU_Kalivas_Italy_naive_test, fill = T)$rfid, "Scrub", comment))
+  return(x)
+})
 
+# currently ok, but change to paste in case any scrubs need additional comments
 WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
   mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)") %>%
   select(-pairnumber)
 WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]][, -c(16:19)] %>% # XX remove three empty columns, age@ship, and bottom rows 
   mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
+WFU_Kalivas_Italy_test[[4]] <- WFU_Kalivas_Italy_test[[4]][, -c(16:19)]
+WFU_Kalivas_Italy_test[[5]] <- WFU_Kalivas_Italy_test[[5]][, -c(16:19)]
+
+# # remove non-digit rfid checking id vars
+WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, function(x){
+ x <- x %>% 
+   dplyr::filter(grepl("^\\d{2,}", rfid))
+   return(x)
+}) 
+idcols <- c("accessid", "rfid")
+unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
+# cleared out the scrubs and comments 
 
 # add resolution section XX can I assume that these are ignorable??? 
 
