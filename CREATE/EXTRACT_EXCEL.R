@@ -423,7 +423,8 @@ WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
 names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
-
+WFU_Jhou_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
+                             cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
 
 # check number of rat siblings in each cohort # cohort 13 has all two siblings
 # and 
