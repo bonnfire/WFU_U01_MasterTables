@@ -637,34 +637,49 @@ WFU_Olivier_co[[3]]$`Animal #` <- as.character(WFU_Olivier_co[[3]]$`Animal #`)
 WFU_Olivier_co[[4]]$`Animal #` <- as.character(WFU_Olivier_co[[4]]$`Animal #`)
 
 
+# 12/10 add shipment 10
+WFU_Olivier_co[10:11] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(3, 1)] # scrubs last
+
 # set column names without "Cocaine and date" header
-WFU_Olivier_co[5:9] <- lapply(WFU_Olivier_co[5:9], 
+WFU_Olivier_co[5:11] <- lapply(WFU_Olivier_co[5:11], 
                               function(x){
                                 names(x) <- x[1,] %>% as.character()
                                 x <- x[-1, ]
                                 return(x)})
 
-WFU_Olivier_co[5:7] <- lapply(WFU_Olivier_co[5:7], 
+WFU_Olivier_co[c(5:7)] <- lapply(WFU_Olivier_co[c(5:7)], 
                               function(x){
                                 names(x)[1:2] <- x[1,1:2] %>% as.character()
                                 x <- x[-1, ]
                                 return(x)})
 
+names(WFU_Olivier_co[[10]])[1:3] <- WFU_Olivier_co[[10]][1,1:3] %>% as.character()
+WFU_Olivier_co[[10]] <- WFU_Olivier_co[[10]][-1, ]
+WFU_Olivier_co[[10]] <- WFU_Olivier_co[[10]][, -(16:17) ]
+
 # clean first table to prevent code from confusing the dup shipment date columns
 WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))] # column 16 to end 
+
+
 
 # # make variable names consistent
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
 
 
 # create the naive/scrubs dataset before removing the na rows and clean up naive dataset 
-names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
+names(WFU_Olivier_co_test) <- append(names(WFU_Olivier_co)[1:9], c("#10(10-28-2019)", "#10(Scrubs)"))
 WFU_Olivier_co_naive_test <- lapply(WFU_Olivier_co_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
-}) %>% rbindlist(use.names=T, idcol = "cohort")
+}) %>% rbindlist(use.names=T, idcol = "cohort") 
+
+WFU_Olivier_co_naive_test <- WFU_Olivier_co_test$`#10(Scrubs)` %>%  
+  mutate(cohort = "#10(10-28-2019)") %>%
+  rbind(WFU_Olivier_co_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
+# remove from olivier dataframe
+WFU_Olivier_co_test[["#10(Scrubs)"]] <- NULL
 
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
@@ -675,6 +690,7 @@ WFU_Olivier_co_naive_test <- lapply(WFU_Olivier_co_test, function(df) {
 
 # change date type
 # placed in this order to prevent excessive nas being introduced by coercion
+WFU_Olivier_co_test[[10]][which(WFU_Olivier_co_test[[10]]$dow == "10/31/20169"),]$dow <- "43769"
 WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
 
 # change box
@@ -685,7 +701,18 @@ WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
 
 # # add age of shipment and check consistency
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
-lapply(WFU_Olivier_co_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
+ # cohort 3 is slightly older
+
+counter = 0
+purrr::walk(WFU_Olivier_co_test, function(x){
+  counter <<- counter + 1
+  if(any(na.exclude(x$shipmentage) > 65)){
+    print(paste0("Cohort ", counter, " has animals that were too old to ship"))
+  }
+  summary <- summary(x$shipmentage)
+  print(paste0("Cohort ", counter))
+  invisible(print(summary))
+})
 
 # # add age of wean and check consistency
 ### notes from Angela at WFU at 11/14/2019 11:32 AM  "The 4 from cocaine should have had a wean date of 9-17-17. "
@@ -694,9 +721,20 @@ WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, function(x) {
   return(x)})
 
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
-lapply(WFU_Olivier_co_test, function(x) summary(x$weanage))
+counter = 0
+purrr::walk(WFU_Olivier_co_test, function(x){
+  counter <<- counter + 1
+  if(any(na.exclude(x$weanage) > 25)){
+    print(paste0("Cohort ", counter, " has animals that weaned too old"))
+  }
+  summary <- summary(x$weanage)
+  print(paste0("Cohort ", counter))
+  invisible(print(summary))
+})
 
-# # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
+WFU_Olivier_co_test[[10]] %>% dplyr::filter(weanage > 25) # XX note to Oksana
+
+# # add comment and resolution and check consistency 
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, cbind, comment = NA, resolution = NA)
 
 # # checking the number of rfid digits
@@ -708,7 +746,7 @@ lapply(WFU_Olivier_co_test, function(x){
 })
 
 # rename all sheets (with correct cohort format)
-names(WFU_Olivier_co_test) <- names(WFU_Olivier_co)
+names(WFU_Olivier_co_test) <- append(names(WFU_Olivier_co)[1:9], "#10(10-28-2019)")
 WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T)
 
 # append naive/scrub comment to dataframe
