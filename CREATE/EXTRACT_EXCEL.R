@@ -654,8 +654,12 @@ WFU_Olivier_co[c(5:7)] <- lapply(WFU_Olivier_co[c(5:7)],
                                 return(x)})
 
 names(WFU_Olivier_co[[10]])[1:3] <- WFU_Olivier_co[[10]][1,1:3] %>% as.character()
-WFU_Olivier_co[[10]] <- WFU_Olivier_co[[10]][-1, ]
 WFU_Olivier_co[[10]] <- WFU_Olivier_co[[10]][, -(16:17) ]
+WFU_Olivier_co[[10]] %<>% 
+  mutate(Sires = lead(Sires), 
+         Dames = lead(Dames),
+         `Animal ID` = lead(`Animal ID`))
+
 
 # clean first table to prevent code from confusing the dup shipment date columns
 WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))] # column 16 to end 
