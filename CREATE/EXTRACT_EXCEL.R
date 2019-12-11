@@ -800,30 +800,36 @@ WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>%
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
 WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% group_by(rack) %>% count(sex)
 
-
 ######################
 # Olivier(Oxycodone) #
 ######################
 WFU_Olivier_ox <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
 
 WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox, function(x){
+
+WFU_Olivier_ox[6:7] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(2, 1)] # scrubs last
+
+WFU_Olivier_ox[c(1:5, 7)] <- lapply(WFU_Olivier_ox[c(1:5, 7)], function(x){
   names(x) <- x[1, ] %>% as.character
   x <- x[-1, ]
 }) # remove first row of all tables prep for uniform variable name fxn
 
-WFU_Olivier_ox_test[[1]] <- WFU_Olivier_ox_test[[1]][, -c(16:18), drop = F]
-WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox_test)
+WFU_Olivier_ox[[1]] <- WFU_Olivier_ox[[1]][, -c(16:18), drop = F]
+WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox)
 
-
+## XX NOTE THAT YOU HAVE NOT PROCESSED THE DATA (clean coat colors and dates)
 # create the naive/scrubs dataset before removing it and clean up naive dataset 
-names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
+names(WFU_Olivier_ox_test) <- append(names(WFU_Olivier_ox)[1:5], c("#6(10-28-2019)", "#6(Scrubs)"))
 WFU_Olivier_ox_naive_test <- lapply(WFU_Olivier_ox_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
-})
+}) %>% rbindlist(fill=T, idcol = "cohort") 
+
+WFU_Olivier_ox_naive_test <- WFU_Olivier_ox_test$`#6(Scrubs)` %>%  
+  mutate(cohort = "#6(10-28-2019)") %>%
+  rbind(WFU_Olivier_ox_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
@@ -831,7 +837,13 @@ WFU_Olivier_ox_naive_test <- lapply(WFU_Olivier_ox_test, function(df) {
 
 # change date type
 WFU_Olivier_ox_test[[2]]$shipmentdate <- as.POSIXct("2018-09-11", tz = "UTC") # must add shipment date to sheet 2 
+WFU_Olivier_ox_test[[6]][which(WFU_Olivier_ox_test[[6]]$dow == "10/31/20169"),]$dow <- "43769"
 WFU_Olivier_ox_test <- uniform.date.testingu01(WFU_Olivier_ox_test)
+
+# because of inconsistent date types, remove from olivier dataframe
+WFU_Olivier_ox_test[[6]] <- rbind(WFU_Olivier_ox_test[[6]], WFU_Olivier_ox_test[[7]])
+WFU_Olivier_ox_test[[7]] <- NULL
+
 
 # make shipment box uniform ** EXPERIMENTER SPECIFIC ** BOX 3  to 3
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x){
@@ -853,30 +865,103 @@ lapply(WFU_Olivier_ox_test, function(x){
 # change coat colors
 WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
 
-# add age of shipment and check consistency
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Olivier_ox_test, function(x) summary(x$shipmentage)) #all seem okay; slightly older cohort 2  
+# # add age of shipment and check consistency
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 
+counter = 0
+purrr::walk(WFU_Olivier_ox_test, function(x){
+  counter <<- counter + 1
+  if(any(na.exclude(x$shipmentage) > 65)){
+    print(paste0("Cohort ", counter, " has animals that were too old to ship"))
+  }
+  summary <- summary(x$shipmentage)
+  print(paste0("Cohort ", counter))
+  invisible(print(summary))
+}) #all seem okay; slightly older cohort 2
 
 # # add age of wean and check consistency
 ### notes from Angela at WFU at 11/14/2019 11:32 AM "The one from Oxycodone had a wean date of 8-24-18."
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x) {
   x$dow[which(x$rfid == "933000320046005")] <- as.POSIXct("2018-08-24", tz = "UTC")
   return(x)})
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, weanage = as.numeric(dow - dob))
-lapply(WFU_Olivier_ox_test, function(x) summary(x$weanage))
+
+WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
+counter = 0
+purrr::walk(WFU_Olivier_ox_test, function(x){
+  counter <<- counter + 1
+  if(any(na.exclude(x$weanage) > 25)){
+    print(paste0("Cohort ", counter, " has animals that weaned too old"))
+  }
+  summary <- summary(x$weanage)
+  print(paste0("Cohort ", counter))
+  invisible(print(summary))
+})
+
+WFU_Olivier_ox_test[[6]] %>% dplyr::filter(weanage > 25) %>% select(labanimalid) %>% unlist() %>% as.character() # XX note to Oksana
+
 
 # # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
 WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, cbind, comment = NA, resolution = NA)
 
-
 # rename all sheets 
-names(WFU_Olivier_ox_test) <- WFU_Olivier_sheetnames
+names(WFU_Olivier_ox_test) <- append(WFU_Olivier_sheetnames, "#6(10-28-19)" )
 
 WFU_Olivier_ox_test_df <- rbindlist(WFU_Olivier_ox_test, id = "cohort", fill = T)
 WFU_Olivier_ox_test_df <- WFU_Olivier_ox_test_df %>% 
-  dplyr::mutate(comment = ifelse(rfid %in% rbindlist(WFU_Olivier_ox_naive_test, use.names=T)$rfid, "Naive", comment)) %>% 
-  dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
+  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_ox_naive_test$rfid, "Scrub", comment),
+                cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
+                cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort))) %>% 
+  dplyr::filter(grepl("^(?=\\d)", rfid, perl = T)) 
 
 # rbindlist(WFU_Olivier_ox_naive_test, use.names=T)$rfid %>% length() and WFU_Olivier_ox_test_df %>% dplyr::filter(!is.na(comment)) %>% dim() 
 # BOTH EQUAL 75 SO THE CODE WORKS
+
+# check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
+WFU_Olivier_ox_test_df %>%
+  dplyr::filter(grepl("^HS", labanimalid)) %>% 
+  mutate(sex_fromid = substr(labanimalid, 3, 3)) %>% 
+  dplyr::filter(sex_fromid != sex ) # nothing wrong 
+
+## check # siblings from prev cohort 
+WFU_Olivier_ox_test_df %>% mutate(U01 = "Olivier_oxy") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "06") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
+
+# shareparents_oxy <- WFU_Olivier_ox_test_df %>% mutate(U01 = "Olivier_oxy") %>% 
+#   group_by(sires, dames, cohort, U01) %>% 
+#   add_count() %>% 
+#   select(U01, sires, dames, cohort, n) %>% 
+#   ungroup() %>% 
+#   rename("siredamepair_in_cohort"="n") %>% 
+#   group_by(sires,dames, U01) %>% 
+#   add_count() %>% 
+#   rename("siredamepair_in_u01"="n") %>% 
+#   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+#   dplyr::filter(cohort == "06") %>%
+#   unique() %>% 
+#   arrange(U01, sires) %>%
+#   data.frame() %>% select(sires, dames)
+# WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06", sires %in% shareparents_oxy$sires, dames %in% shareparents_oxy$dames) %>% select(labanimalid) %>% unlist() %>% as.character()
+
+## check # of same sex siblings (diff litter)
+WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, sex) # if scrubs is not important, this code works, otherwise, add is.na(comment)
+
+## check # of same sex littermates (same litter)
+WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06", is.na(comment)) %>% janitor::get_dupes(sires, dames, litternumber, sex)%>% dim #19 pairs
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "06") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
+
