@@ -679,8 +679,8 @@ WFU_Olivier_co_naive_test <- WFU_Olivier_co_test$`#10(Scrubs)` %>%
   mutate(cohort = "#10(10-28-2019)") %>%
   rbind(WFU_Olivier_co_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
 # remove from olivier dataframe
+WFU_Olivier_co_test[[10]] <- rbind(WFU_Olivier_co_test[[10]], WFU_Olivier_co_test[["#10(Scrubs)"]])
 WFU_Olivier_co_test[["#10(Scrubs)"]] <- NULL
-
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
@@ -734,6 +734,10 @@ purrr::walk(WFU_Olivier_co_test, function(x){
 
 WFU_Olivier_co_test[[10]] %>% dplyr::filter(weanage > 25) # XX note to Oksana
 
+# # checking id vars
+idcols <- c("labanimalid", "accessid", "rfid")
+unique.values.length.by.col(WFU_Olivier_co_test, idcols) %>% invisible()
+
 # # add comment and resolution and check consistency 
 WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, cbind, comment = NA, resolution = NA)
 
@@ -748,6 +752,8 @@ lapply(WFU_Olivier_co_test, function(x){
 # rename all sheets (with correct cohort format)
 names(WFU_Olivier_co_test) <- append(names(WFU_Olivier_co)[1:9], "#10(10-28-2019)")
 WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T)
+WFU_Olivier_co_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
+                             cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
 
 # append naive/scrub comment to dataframe
 # # add comment of scrubs for matching rfid 
@@ -757,7 +763,7 @@ WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>%
 # to check if all naive cases were identified: all 15 in each cohort (5-9) were found
 # WFU_Olivier_co_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
 
-# check the sexes 
+# check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
 WFU_Olivier_co_test_df %>%
   dplyr::filter(grepl("^HS", labanimalid)) %>% 
   mutate(sex_fromid = substr(labanimalid, 3, 3)) %>% 
@@ -766,6 +772,34 @@ WFU_Olivier_co_test_df %>%
 # between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
 # diff bw labanimalid vs labanimalnumber 
 # id is the letter followed by numbers and number should all be number (currently mistranslated -- should be fixed now)
+
+## check # siblings from prev cohort 
+WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "10") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
+
+## check # of same sex siblings (diff litter)
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, sex)
+
+## check # of same sex littermates (same litter)
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% group_by(rack) %>% count(sex)
+
 
 ######################
 # Olivier(Oxycodone) #
