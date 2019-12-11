@@ -660,11 +660,8 @@ WFU_Olivier_co[[10]] %<>%
          Dames = lead(Dames),
          `Animal ID` = lead(`Animal ID`))
 
-
 # clean first table to prevent code from confusing the dup shipment date columns
 WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))] # column 16 to end 
-
-
 
 # # make variable names consistent
 WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
@@ -793,6 +790,23 @@ WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine") %>%
   arrange(U01, sires) %>%
   data.frame() 
 
+sibs_matches_cocaine <- WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "10") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() %>% 
+  select(sires, dames)
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10", sires %in% sibs_matches_cocaine$sires, dames %in% sibs_matches_cocaine$dames)
+
 ## check # of same sex siblings (diff litter)
 WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, sex)
 
@@ -802,7 +816,7 @@ WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
 WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% group_by(rack) %>% count(sex)
+WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table()
 
 ######################
 # Olivier(Oxycodone) #
