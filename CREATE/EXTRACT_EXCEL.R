@@ -370,9 +370,14 @@ WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% cou
 ######################
 WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 
+# 12/10 Realized that I hadn't included Jhou #12
+WFU_Jhou[[12]] <- u01.importxlsx("Jhou #12 shipping sheet.xlsx")[["JHOU"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+names(WFU_Jhou)[12] <- "#12(10-08-2019)" 
+
 ## 11/18 
-WFU_Jhou[[12]] <- u01.importxlsx("Jhou #13 Shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
-names(WFU_Jhou)[12] <- "#13(11-19-2019)" ##### XX ADDRESS MISSING COHORT 12 ISSUE WITH OKSANA
+WFU_Jhou[[13]] <- u01.importxlsx("Jhou #13 Shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+names(WFU_Jhou)[13] <- "#13(11-19-2019)" 
+
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 
