@@ -55,4 +55,4 @@ postgresqlCopyInDataframe(con, df)
 
 
 # solution3: using dbWriteTable
-dbWriteTable(con, c("u01_olivier_george_cocaine","olivier_cocaine_wfu_master"), df, row.names=FALSE, append=TRUE)
+dbWriteTable(con, c("u01_olivier_george_cocaine","olivier_cocaine_wfu_master"), shipments$Olivier_Co[which(shipments$Olivier_Co$cohort == 10 & is.na(shipments$Olivier_Co$comment)),] , row.names=FALSE, append=TRUE) # adding non scrubs for now until i hear further notice
