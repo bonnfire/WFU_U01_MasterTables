@@ -27,3 +27,32 @@ dbDisconnect(con)
 #     where cohort='01'
 # "
 # results <- dbGetQuery(con, sql)
+
+
+# solution1: update function to update the table from r 
+
+
+
+update <- function(i) {
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, user='postgres', password='postgres', dbname='U01')
+  txt <- paste("UPDATE data SET column_one=",data$column_one[i],",column_two=",data$column_two[i]," where id=",data$id[i])
+  dbGetQuery(con, txt)
+  dbDisconnect(con)
+}
+
+
+registerDoMC()
+
+foreach(i = 1:length(data$column_one), .inorder=FALSE,.packages="RPostgreSQL")%dopar%{
+  update(i)
+}
+
+
+# solution2: using RPostgreSQL::CopyInDataframe() function
+dbSendQuery(con, "copy foo from stdin")
+postgresqlCopyInDataframe(con, df)
+
+
+# solution3: using dbWriteTable
+dbWriteTable(con, c("u01_olivier_george_cocaine","olivier_cocaine_wfu_master"), df, row.names=FALSE, append=TRUE)

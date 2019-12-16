@@ -14,7 +14,7 @@ shipments <- list("Kalivas_Italy" = WFU_Kalivas_Italy_test_df,
 
 
 shipments <- lapply(shipments, function(x){
-  x$cohort <- stringr::str_match(x$cohort, "#(\\d+).*?")[,2]
+  x$cohort <- ifelse(grepl("#", x$cohort), stringr::str_match(x$cohort, "#(\\d+).*?")[,2], x$cohort)
   x$cohort <- ifelse(nchar(x$cohort) > 1, x$cohort, gsub('([[:digit:]]{1})$', '0\\1', x$cohort)) # add leading zeroes when necessary
   x$litternumber = as.numeric(x$litternumber)
   x$littersize = as.numeric(x$littersize)
