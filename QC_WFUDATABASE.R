@@ -49,11 +49,11 @@ ggplot(shipments_df, aes(dob)) +
 # look at birthday and litternumber? 
 # expect: birthday should be consistent across sire dame pair and litternumber
 shipments_df[,c('dames','sires', 'litternumber')] # select columns to check duplicates
-siblings_insamelitter <- shipments_df[duplicated(shipments_df[,c('dames','sires', 'litternumber')]) | duplicated(shipments_df[,c('dames','sires', 'litternumber')], fromLast=TRUE),]
-siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% select(U01, uniquebday) %>% unique()
-siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% View()
-siblings_insamelitter %>% group_by(dames,sires,litternumber,littersize) %>% mutate(uniquelittersize = n_distinct(littersize)) %>% View()
-split(siblings_insamelitter, dplyr::group_indices(dames,sires,litternumber))
+siblings_insamelitter <- shipments_df[duplicated(shipments_df[,c('dames','sires', 'litternumber')]) | duplicated(shipments_df[,c('dames','sires', 'litternumber')], fromLast=TRUE),] # filter out animals that share the dames, sires, and litternumber
+siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% select(u01, uniquebday) %>% unique()
+siblings_insamelitter %>% group_by(dames,sires,litternumber) %>% mutate(uniquebday = n_distinct(dob)) %>% ungroup() %>% dplyr::filter(uniquebday!=1) %>% arrange(dames,sires,litternumber) %>% select(-uniquebday) %>%  View()
+# siblings_insamelitter %>% group_by(dames,sires,litternumber,littersize) %>% mutate(uniquelittersize = n_distinct(littersize)) %>% View()
+# split(siblings_insamelitter, dplyr::group_indices(dames,sires,litternumber))
 
 
 ## pick up from here: 
@@ -160,12 +160,12 @@ dev.off()
 # for shipment timeline graph
 wfu_shipmentsiblings_allexpswdate <- shipments_df %>% 
   dplyr::filter(!comment %in% c("Naive", "Pregnant female")) %>%
-  group_by(sires, dames, cohort, U01) %>% 
+  group_by(sires, dames, cohort, u01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n, shipmentdate) %>% 
   ungroup() %>% 
   rename("siredamepair_in_cohort"="n") %>% 
-  group_by(sires,dames, U01) %>% 
+  group_by(sires,dames, u01) %>% 
   add_count() %>% 
   rename("siredamepair_in_u01"="n") %>% 
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01)
@@ -174,28 +174,28 @@ wfu_shipmentsiblings_allexpswdate <- shipments_df %>%
 # for details
 wfu_shipmentsiblings_allexps <- shipments_df %>% 
   dplyr::filter(!comment %in% c("Naive", "Pregnant female")) %>%
-  group_by(sires, dames, cohort, U01) %>% 
+  group_by(sires, dames, cohort, u01) %>% 
   add_count() %>% 
-  select(U01, sires, dames, cohort, n) %>% 
+  select(u01, sires, dames, cohort, n) %>% 
   ungroup() %>% 
   rename("siredamepair_in_cohort"="n") %>% 
-  group_by(sires,dames, U01) %>% 
+  group_by(sires,dames, u01) %>% 
   add_count() %>% 
   rename("siredamepair_in_u01"="n") %>% 
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
   unique() %>% 
-  arrange(U01, sires) %>%
+  arrange(u01, sires) %>%
   data.frame() 
 
 # for overview
 wfu_shipmentsiblings_byu01 <- wfu_shipmentsiblings_allexps %>%
   ungroup() %>% 
-  select(U01, sires, dames) %>%
+  select(u01, sires, dames) %>%
   distinct() %>% # count was each 2, so every incident only appeared in one other cohort
-  count(U01)
+  count(u01)
 
 # clearer overview text 
-wfu_shipmentsiblings_byu01$U01 <- mgsub::mgsub(wfu_shipmentsiblings_byu01$U01,
+wfu_shipmentsiblings_byu01$u01 <- mgsub::mgsub(wfu_shipmentsiblings_byu01$u01,
                                c("Olivier_Co", "Olivier_Oxy"),
                                c("Olivier Cocaine", "Olivier Oxycodone"))
 # for details grid reformatting, need to cut the cases up to fit onto pages
@@ -275,4 +275,10 @@ shipments_df %>%
   count(sex) %>% 
   arrange(rack) %>% 
   dplyr::filter(n!=1) # PASS check and tried with removing shipment date as variable and passed too
+
+## for rsm/wfu, send out more metadata about the spilling sires/dames
+shipments_df %>% dplyr::filter(u01 %in% wfu_shipmentsiblings_allexps$u01,
+                               sires %in% wfu_shipmentsiblings_allexps$sires,
+                               dames %in% wfu_shipmentsiblings_allexps$dames,
+                               cohort %in% wfu_shipmentsiblings_allexps$cohort)
 
