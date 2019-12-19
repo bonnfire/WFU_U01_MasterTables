@@ -141,7 +141,7 @@ uniform.boxformat <- function(df){
 
 
 ######################
-###### Flagel ########
+## IGNORE Flagel #####
 ######################
 WFU_Flagel <- u01.importxlsx("Flagel Master Shipping Sheet.xlsx")
 WFU_Flagel_test <- uniform.var.names.testingu01(WFU_Flagel)
