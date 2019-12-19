@@ -13,9 +13,20 @@ for(i in seq_along(u01s)){
 }
 
 
-dir.create(paste0("~/home/bonnie/Dropbox (Palmer Lab)/PalmerLab_Datasets/u01_tom_jhou/database/master_table/cohort", 1:10))
-u01s
-data <- get(u01s[2])
+
+u01s_raw <- ls(pattern = "WFU[^_]*_[^_]*$")
+data <- get(u01s_raw[grep("jhou", u01s_raw, ignore.case = T)])
 openxlsx::write.xlsx(data[2], file = paste0("/home/bonnie/Dropbox (Palmer Lab)/PalmerLab_Datasets/u01_tom_jhou/database/master_table/cohort", j, "_", data, ".xlsx"))
 
-/home/bonnie/Dropbox (Palmer Lab)/PalmerLab_Datasets/u01_tom_jhou/database/master_table
+u01s_processed <- grep("(?>naive)", ls(pattern = "WFU.*test$"), perl = T, value = T, invert = T)
+data_processed <- get(u01s_processed[grep("jhou", u01s_processed, ignore.case = T)])
+#  create the directories depending on how many cohorts each u01 has
+setwd("~/Dropbox (Palmer Lab)/PalmerLab_Datasets/u01_tom_jhou/database/master_table")
+for(i in 1:length(data)){
+  dir.create(file.path(paste0('cohort', str_pad(i, 2, "left", "0"))), recursive = F)
+  openxlsx::write.xlsx(data[[i]], file = paste0("/home/bonnie/Dropbox (Palmer Lab)/PalmerLab_Datasets/u01_tom_jhou/database/master_table/cohort", str_pad(i, 2, "left", "0"), "/raw_cohort", str_pad(i, 2, "left", "0"),  "_", u01s_raw[2], ".xlsx"))
+  write.csv(data_processed[[i]], file = paste0("/home/bonnie/Dropbox (Palmer Lab)/PalmerLab_Datasets/u01_tom_jhou/database/master_table/cohort", str_pad(i, 2, "left", "0"), "/processed_cohort", str_pad(i, 2, "left", "0"),  "_", u01s_raw[2], ".csv"))
+  }
+
+
+write.csv(data_processed[[1]], "test.csv")
