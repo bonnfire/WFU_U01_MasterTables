@@ -143,48 +143,48 @@ uniform.boxformat <- function(df){
 ######################
 ## IGNORE Flagel #####
 ######################
-WFU_Flagel <- u01.importxlsx("Flagel Master Shipping Sheet.xlsx")
-WFU_Flagel_test <- uniform.var.names.testingu01(WFU_Flagel)
-WFU_Flagel_test <- remove.scrubs.and.narowsolivier(WFU_Flagel_test) # temporarily borrowing olivier scrubs function bc it also removes columns with na and in the first sheet, additional column that notes cost to add per rat in first table
-
-# # checking id vars
-idcols <- c("labanimalnumber", "accessid", "rfid")
-unique.values.length.by.col(WFU_Flagel_test, idcols) ## XX unique.values.length.by.col needs minor tweaking for cleaner output 
-
-# # checking date consistency 
-WFU_Flagel_test2 <- uniform.date.testingu01(WFU_Flagel_test)
-
-# # add age of shipment and check consistency
-WFU_Flagel_test <- lapply(WFU_Flagel_test, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Flagel_test, function(x) summary(x$shipmentage))
-subset(WFU_Flagel_test[[2]], shipmentage < 0) ## XX include this in Dropbox, notify Apurva and Oksana
-
-# # checking the number of rfid digits 
-
-lapply(WFU_Flagel_test, function(x){
-  x %>% 
-    mutate(rfid_digits = nchar(rfid)) %>% 
-    filter(rfid_digits != 15)
-})
-
-# # checking coat color consistency
-WFU_Flagel_test <- uniform.coatcolors(WFU_Flagel_test)
-lapply(WFU_Flagel_test, function(df)
-  sapply(df["coatcolor"], unique))
-
-# # return clean sheet names 
-names(WFU_Flagel_test) <- names(WFU_Flagel)
+# WFU_Flagel <- u01.importxlsx("Flagel Master Shipping Sheet.xlsx")
+# WFU_Flagel_test <- uniform.var.names.testingu01(WFU_Flagel)
+# WFU_Flagel_test <- remove.scrubs.and.narowsolivier(WFU_Flagel_test) # temporarily borrowing olivier scrubs function bc it also removes columns with na and in the first sheet, additional column that notes cost to add per rat in first table
+# 
+# # # checking id vars
+# idcols <- c("labanimalnumber", "accessid", "rfid")
+# unique.values.length.by.col(WFU_Flagel_test, idcols) ## XX unique.values.length.by.col needs minor tweaking for cleaner output 
+# 
+# # # checking date consistency 
+# WFU_Flagel_test2 <- uniform.date.testingu01(WFU_Flagel_test)
+# 
+# # # add age of shipment and check consistency
+# WFU_Flagel_test <- lapply(WFU_Flagel_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+# lapply(WFU_Flagel_test, function(x) summary(x$shipmentage))
+# subset(WFU_Flagel_test[[2]], shipmentage < 0) ## XX include this in Dropbox, notify Apurva and Oksana
+# 
+# # # checking the number of rfid digits 
+# 
+# lapply(WFU_Flagel_test, function(x){
+#   x %>% 
+#     mutate(rfid_digits = nchar(rfid)) %>% 
+#     filter(rfid_digits != 15)
+# })
+# 
+# # # checking coat color consistency
+# WFU_Flagel_test <- uniform.coatcolors(WFU_Flagel_test)
+# lapply(WFU_Flagel_test, function(df)
+#   sapply(df["coatcolor"], unique))
+# 
+# # # return clean sheet names 
+# names(WFU_Flagel_test) <- names(WFU_Flagel)
 
 ######################
 ### Kalivas(ITALY) ###
 ######################
-WFU_Kalivas_Italy <- u01.importxlsx("(Italy) Master Shipping.xlsx")
-WFU_Kalivas_Italy[[4]] <- u01.importxlsx("Italy #4 Shipping sheet.xlsx")$Italy
-WFU_Kalivas_Italy[[5]] <- u01.importxlsx("Italy #5 Shipping sheet.xlsx")$Italy
-WFU_Kalivas_Italy_test <- uniform.var.names.testingu01(WFU_Kalivas_Italy)
+WFU_KalivasItaly <- u01.importxlsx("(Italy) Master Shipping.xlsx")
+WFU_KalivasItaly[[4]] <- u01.importxlsx("Italy #4 Shipping sheet.xlsx")$Italy
+WFU_KalivasItaly[[5]] <- u01.importxlsx("Italy #5 Shipping sheet.xlsx")$Italy
+WFU_KalivasItaly_test <- uniform.var.names.testingu01(WFU_KalivasItaly)
 
 # create the naive dataset before removing it and clean up naive dataset (pilot 15 rats in cohort 2)
-WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
+WFU_KalivasItaly_naive_test <- lapply(WFU_KalivasItaly_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
@@ -196,73 +196,73 @@ WFU_Kalivas_Italy_naive_test <- lapply(WFU_Kalivas_Italy_test, function(df) {
 
 # 12/6 unsure about removing scrubs now; just comment
 
-# WFU_Kalivas_Italy_test <- remove.scrubs.and.narows(WFU_Kalivas_Italy_test) # get row number for which italy is shown and then remove all rows after that 
+# WFU_KalivasItaly_test <- remove.scrubs.and.narows(WFU_KalivasItaly_test) # get row number for which italy is shown and then remove all rows after that 
 
 # removeallnarow <- function(df){
 #   ind <- apply(df, 1, function(x) all(is.na(x)))
 #   df <- df[ !ind, ]
 # } # remove rows with all na
-# WFU_Kalivas_Italy_test[[2]] <- removeallnarow(WFU_Kalivas_Italy_test[[2]]) # might not actually need this
+# WFU_KalivasItaly_test[[2]] <- removeallnarow(WFU_KalivasItaly_test[[2]]) # might not actually need this
 
 # # checking date consistency 
-WFU_Kalivas_Italy_test <- uniform.date.testingu01(WFU_Kalivas_Italy_test)
+WFU_KalivasItaly_test <- uniform.date.testingu01(WFU_KalivasItaly_test)
 
 # # add age of shipment and check consistency
-WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, shipmentage = as.numeric(shipmentdate - dob))
-lapply(WFU_Kalivas_Italy_test, function(x) summary(x$shipmentage))
+WFU_KalivasItaly_test <- lapply(WFU_KalivasItaly_test, transform, shipmentage = as.numeric(shipmentdate - dob))
+lapply(WFU_KalivasItaly_test, function(x) summary(x$shipmentage))
 
 # # add age of wean and check consistency
-WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, transform, weanage = as.numeric(dow - dob))
-lapply(WFU_Kalivas_Italy_test, function(x) summary(x$weanage))
+WFU_KalivasItaly_test <- lapply(WFU_KalivasItaly_test, transform, weanage = as.numeric(dow - dob))
+lapply(WFU_KalivasItaly_test, function(x) summary(x$weanage))
 
 # # checking the number of rfid digits 
 
-lapply(WFU_Kalivas_Italy_test, function(x){
+lapply(WFU_KalivasItaly_test, function(x){
   x %>% 
     mutate(rfid_digits = nchar(rfid)) %>% 
     dplyr::filter(rfid_digits != 15)
 })
 
 # # checking coat color consistency
-lapply(WFU_Kalivas_Italy_test, function(df)
+lapply(WFU_KalivasItaly_test, function(df)
   sapply(df["coatcolor"], unique)) ## XX Address [[2]] data 
 
-WFU_Kalivas_Italy_test <- uniform.coatcolors(WFU_Kalivas_Italy_test)
+WFU_KalivasItaly_test <- uniform.coatcolors(WFU_KalivasItaly_test)
 
 # add comment section (esp for delayed shipping day and to add scrub note for 15 animals in co2)
-WFU_Kalivas_Italy_test <- mapply(cbind, WFU_Kalivas_Italy_test, comment = NA, resolution = NA) 
-WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, function(x){
+WFU_KalivasItaly_test <- mapply(cbind, WFU_KalivasItaly_test, comment = NA, resolution = NA) 
+WFU_KalivasItaly_test <- lapply(WFU_KalivasItaly_test, function(x){
   x <- x %>% 
-    mutate(comment = ifelse(rfid %in% rbindlist(WFU_Kalivas_Italy_naive_test, fill = T)$rfid, "Scrub", comment))
+    mutate(comment = ifelse(rfid %in% rbindlist(WFU_KalivasItaly_naive_test, fill = T)$rfid, "Scrub", comment))
   return(x)
 })
 
 # currently ok, but change to paste in case any scrubs need additional comments
-WFU_Kalivas_Italy_test[[1]] <- WFU_Kalivas_Italy_test[[1]] %>%
+WFU_KalivasItaly_test[[1]] <- WFU_KalivasItaly_test[[1]] %>%
   mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)") %>%
   select(-pairnumber)
-WFU_Kalivas_Italy_test[[3]] <- WFU_Kalivas_Italy_test[[3]][, -c(16:19)] %>% # XX remove three empty columns, age@ship, and bottom rows 
+WFU_KalivasItaly_test[[3]] <- WFU_KalivasItaly_test[[3]][, -c(16:19)] %>% # XX remove three empty columns, age@ship, and bottom rows 
   mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
-WFU_Kalivas_Italy_test[[4]] <- WFU_Kalivas_Italy_test[[4]][, -c(16:19)]
-WFU_Kalivas_Italy_test[[5]] <- WFU_Kalivas_Italy_test[[5]][, -c(16:19)]
+WFU_KalivasItaly_test[[4]] <- WFU_KalivasItaly_test[[4]][, -c(16:19)]
+WFU_KalivasItaly_test[[5]] <- WFU_KalivasItaly_test[[5]][, -c(16:19)]
 
 # # remove non-digit rfid checking id vars
-WFU_Kalivas_Italy_test <- lapply(WFU_Kalivas_Italy_test, function(x){
+WFU_KalivasItaly_test <- lapply(WFU_KalivasItaly_test, function(x){
  x <- x %>% 
    dplyr::filter(grepl("^\\d{2,}", rfid))
    return(x)
 }) 
 idcols <- c("accessid", "rfid")
-unique.values.length.by.col(WFU_Kalivas_Italy_test, idcols) 
+unique.values.length.by.col(WFU_KalivasItaly_test, idcols) 
 
 # cleared out the scrubs and comments 
-names(WFU_Kalivas_Italy_test) <- str_pad(seq(1:length(WFU_Kalivas_Italy_test)), 2, pad = "0")
+names(WFU_KalivasItaly_test) <- str_pad(seq(1:length(WFU_KalivasItaly_test)), 2, pad = "0")
 
-WFU_Kalivas_Italy_test_df <- rbindlist(WFU_Kalivas_Italy_test, id = "cohort", fill = T)
+WFU_KalivasItaly_test_df <- rbindlist(WFU_KalivasItaly_test, id = "cohort", fill = T)
 
 
 ## check no siblings from prev cohort 
-WFU_Kalivas_Italy_test_df %>% mutate(U01 = "Kalivas_Italy") %>% dplyr::filter(cohort == "04") %>% 
+WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "04") %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
@@ -277,15 +277,15 @@ WFU_Kalivas_Italy_test_df %>% mutate(U01 = "Kalivas_Italy") %>% dplyr::filter(co
   data.frame() 
 
 ## check no same sex siblings (diff litter)
-WFU_Kalivas_Italy_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
+WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check no same sex littermates (same litter)
-WFU_Kalivas_Italy_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_Kalivas_Italy_test_df %>% dplyr::filter(cohort == "04") %>% 
+WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "04") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Kalivas_Italy_test_df %>% mutate(U01 = "Kalivas_Italy") %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) 
+WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) 
 
 # add resolution section XX can I assume that these are ignorable??? 
 
@@ -499,218 +499,218 @@ names(WFU_Mitchell_test) <- names(WFU_Mitchell)
 WFU_Mitchell_test_df <- rbindlist(WFU_Mitchell_test, id = "cohort", fill = T)
 
 ## XX INCOMPLETE  
-# # validate dates 
-QC(WFU_Mitchell_test)
-
-# # check for outliers
-
-# # collect counts for each column
-cols <- c("Dames", "Sires", grep("ID|Lab_Animal", names(WFU_Mitchell_test[[1]]), value = T) %>% unlist())
-table(WFU_Mitchell_test[[1]][c("Shipment_Box", "Ear_Punch")])
-
-map(WFU_Mitchell_test, ~ count(., Sex)) # replace sex with any of the variables, but figure out a way to output all interested variables
-map(WFU_Mitchell_test, ~ count(., Dames, Sires, Litter_Number))
-
-map(WFU_Mitchell_test, ~ count(., Litter_Number, Litter_Size))
-
-map(WFU_Mitchell_test, ~ subset(., Dames==Sires))
-
-map_interestedvars <- function(df, vector){
-  for(i in 1:length(vector))
-  map(WFU_Mitchell_test, ~ count(., Sex))
-}
-
-map(WFU_Mitchell_test, ~ count(., Dames, Sires, Sex) %>% 
-                     subset(n != 1))
-
-# graphics for email
-Mitchell_SameSexSiblings <- map(WFU_Mitchell_test, ~ count(., Dames, Sires, Sex) %>%
-                              subset(n!=1) %>% 
-                              nrow)
-All_Mitchell <- bind_rows(WFU_Mitchell_test) %>% count(Dames, Sires) %>% subset(is.na(Dames) == F)
-ggplot(All_Mitchell, aes(n)) + geom_bar() + ggtitle("All Mitchell Shipments") +
-  xlab("Number of siblings in one shipment") + ylab("Count") + 
-  geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5),size=4)
-
-# # subset original dataset to extract cases
-# WFU_Mitchell_problemsubset<- lapply(seq_along(WFU_Mitchell_test), 
-#                                 function(i) subset(WFU_Mitchell_test[[i]], Dames %in% conds_mitch[[i]]$Dames & Sires %in% conds_mitch[[i]]$Sires))
-WFU_Mitchell_problemsubset <- map(WFU_Mitchell_test, ~ group_by(.x, Dames, Sires, Sex) %>% 
-      filter(n() > 1))
-names(WFU_Mitchell_problemsubset) <- names(WFU_Mitchell_test)
-Mitchell_listDF <- list("#1(10-30-18)"=WFU_Mitchell_problemsubset[["#1(10-30-18)"]][,-(15:18)], 
-                    "#2(2-26-19)"=WFU_Mitchell_problemsubset[["#2(2-26-19)"]],
-                    "#3(6-17-19)"=WFU_Mitchell_problemsubset[["#3(6-17-19)"]])  
-
-write.xlsx(Mitchell_listDF, file = "Mitchell_SiblingSubset.xlsx", append = T)
-
-# # subset original dataset to extract one sib cases
-WFU_Mitchell_problem2subset <- map(WFU_Mitchell_test, ~ group_by(.x, Dames, Sires) %>% 
-                                    filter(n() == 1))
-names(WFU_Mitchell_problem2subset) <- names(WFU_Mitchell_test)
-Mitchell_list2DF <- list("#1(10-30-18)"=WFU_Mitchell_problem2subset[["#1(10-30-18)"]][,-(15:18)], 
-                        "#2(2-26-19)"=WFU_Mitchell_problem2subset[["#2(2-26-19)"]],
-                        "#3(6-17-19)"=WFU_Mitchell_problem2subset[["#3(6-17-19)"]])  
-write.xlsx(Mitchell_list2DF, file = "Mitchell_OneSiblingSubset.xlsx", append = T)
-
-table(WFU_Mitchell_test[[3]]$Dames, WFU_Mitchell_test[[3]]$Sires) %>% knitr::kable()
-# WFU_Mitchell_test %>% 
-#   dplyr::select(-one_of(cols))  %>% 
-#   map(table)
-# str_extract_all(names(WFU_Mitchell_test, "ID") %>% unlist()))
-# %>% map(table)
-
-# # collect counts for each experiment 
-## plan: link with mitchell data to know which experiment 
-
-
-# # check litter size 
-map(WFU_Mitchell_test, ~ count(., Litter_Number))
-map(WFU_Mitchell_test, ~ count(., Litter_Size))
-
-
-map(WFU_Mitchell_test, ~ group_by(., Shipment_Box, Sex) %>%
-      summarise(Count = n()))
-
-map(WFU_Mitchell_test, ~ group_by(., Dames, Sires, Litter_Size) %>%
-      summarise(Count = n()))
-
-map(WFU_Mitchell_test, ~ group_by(., Dames, Sires) %>%
-      summarise(Count = n()))
-
-map(WFU_Mitchell_test, ~ group_by(., Dames, Sires) %>% 
-      summarise(n = n()) %>%
-      tidyr::spread(Sires, n)) %>%
-  na.omit() %>%
-      knitr::kable()
-# # parents and number of offspring
-UniqueParents <- map(WFU_Mitchell_test, ~ count(., Dames, Sires)) 
-knitr::kable(UniqueParents)
-
-# # summary for family size
-options(digits = 2) 
-lapply(UniqueParents, function(df)
-  sapply(df["n"], table))
-lapply(UniqueParents, function(df)
-  sapply(df["n"], summary))
-
-map(UniqueParents, ggplot(.) + geom_histogram(aes(n)))
-
-ggplot(UniqueParents[[1]]) + geom_histogram(aes(n))
-ggplot(UniqueParents[[2]]) + geom_histogram(aes(n))
-ggplot(UniqueParents[[3]]) + geom_histogram(aes(n))
-############################## map(~ggplot(mtcars, aes_string(x = .)) + geom_histogram())
-
-map(WFU_Mitchell_test, ~ count(., Dames))
-map(WFU_Mitchell_test, ~ count(., Sires))
-
-# # tabulate by sex and parents
-
-# highlight <- createStyle()
-# conditionalFormatting(WFU_Mitchell_1, )
-
-# check coatcolor 
-lapply(WFU_Mitchell_test, function(df)
-  sapply(df["coatcolor"], unique))
-WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
-# check coatcolor consistency with
-# lapply(WFU_Mitchell_test, function(df)
-# sapply(df["coatcolor"], unique))
-
-# # check data type 
-str(WFU_Mitchell_test)
-
-# # create log table to be imported into sql
-
+# # # validate dates 
+# QC(WFU_Mitchell_test)
 # 
+# # # check for outliers
+# 
+# # # collect counts for each column
+# cols <- c("Dames", "Sires", grep("ID|Lab_Animal", names(WFU_Mitchell_test[[1]]), value = T) %>% unlist())
+# table(WFU_Mitchell_test[[1]][c("Shipment_Box", "Ear_Punch")])
+# 
+# map(WFU_Mitchell_test, ~ count(., Sex)) # replace sex with any of the variables, but figure out a way to output all interested variables
+# map(WFU_Mitchell_test, ~ count(., Dames, Sires, Litter_Number))
+# 
+# map(WFU_Mitchell_test, ~ count(., Litter_Number, Litter_Size))
+# 
+# map(WFU_Mitchell_test, ~ subset(., Dames==Sires))
+# 
+# map_interestedvars <- function(df, vector){
+#   for(i in 1:length(vector))
+#   map(WFU_Mitchell_test, ~ count(., Sex))
+# }
+# 
+# map(WFU_Mitchell_test, ~ count(., Dames, Sires, Sex) %>% 
+#                      subset(n != 1))
+# 
+# # graphics for email
+# Mitchell_SameSexSiblings <- map(WFU_Mitchell_test, ~ count(., Dames, Sires, Sex) %>%
+#                               subset(n!=1) %>% 
+#                               nrow)
+# All_Mitchell <- bind_rows(WFU_Mitchell_test) %>% count(Dames, Sires) %>% subset(is.na(Dames) == F)
+# ggplot(All_Mitchell, aes(n)) + geom_bar() + ggtitle("All Mitchell Shipments") +
+#   xlab("Number of siblings in one shipment") + ylab("Count") + 
+#   geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5),size=4)
+# 
+# # # subset original dataset to extract cases
+# # WFU_Mitchell_problemsubset<- lapply(seq_along(WFU_Mitchell_test), 
+# #                                 function(i) subset(WFU_Mitchell_test[[i]], Dames %in% conds_mitch[[i]]$Dames & Sires %in% conds_mitch[[i]]$Sires))
+# WFU_Mitchell_problemsubset <- map(WFU_Mitchell_test, ~ group_by(.x, Dames, Sires, Sex) %>% 
+#       filter(n() > 1))
+# names(WFU_Mitchell_problemsubset) <- names(WFU_Mitchell_test)
+# Mitchell_listDF <- list("#1(10-30-18)"=WFU_Mitchell_problemsubset[["#1(10-30-18)"]][,-(15:18)], 
+#                     "#2(2-26-19)"=WFU_Mitchell_problemsubset[["#2(2-26-19)"]],
+#                     "#3(6-17-19)"=WFU_Mitchell_problemsubset[["#3(6-17-19)"]])  
+# 
+# write.xlsx(Mitchell_listDF, file = "Mitchell_SiblingSubset.xlsx", append = T)
+# 
+# # # subset original dataset to extract one sib cases
+# WFU_Mitchell_problem2subset <- map(WFU_Mitchell_test, ~ group_by(.x, Dames, Sires) %>% 
+#                                     filter(n() == 1))
+# names(WFU_Mitchell_problem2subset) <- names(WFU_Mitchell_test)
+# Mitchell_list2DF <- list("#1(10-30-18)"=WFU_Mitchell_problem2subset[["#1(10-30-18)"]][,-(15:18)], 
+#                         "#2(2-26-19)"=WFU_Mitchell_problem2subset[["#2(2-26-19)"]],
+#                         "#3(6-17-19)"=WFU_Mitchell_problem2subset[["#3(6-17-19)"]])  
+# write.xlsx(Mitchell_list2DF, file = "Mitchell_OneSiblingSubset.xlsx", append = T)
+# 
+# table(WFU_Mitchell_test[[3]]$Dames, WFU_Mitchell_test[[3]]$Sires) %>% knitr::kable()
+# # WFU_Mitchell_test %>% 
+# #   dplyr::select(-one_of(cols))  %>% 
+# #   map(table)
+# # str_extract_all(names(WFU_Mitchell_test, "ID") %>% unlist()))
+# # %>% map(table)
+# 
+# # # collect counts for each experiment 
+# ## plan: link with mitchell data to know which experiment 
+# 
+# 
+# # # check litter size 
+# map(WFU_Mitchell_test, ~ count(., Litter_Number))
+# map(WFU_Mitchell_test, ~ count(., Litter_Size))
+# 
+# 
+# map(WFU_Mitchell_test, ~ group_by(., Shipment_Box, Sex) %>%
+#       summarise(Count = n()))
+# 
+# map(WFU_Mitchell_test, ~ group_by(., Dames, Sires, Litter_Size) %>%
+#       summarise(Count = n()))
+# 
+# map(WFU_Mitchell_test, ~ group_by(., Dames, Sires) %>%
+#       summarise(Count = n()))
+# 
+# map(WFU_Mitchell_test, ~ group_by(., Dames, Sires) %>% 
+#       summarise(n = n()) %>%
+#       tidyr::spread(Sires, n)) %>%
+#   na.omit() %>%
+#       knitr::kable()
+# # # parents and number of offspring
+# UniqueParents <- map(WFU_Mitchell_test, ~ count(., Dames, Sires)) 
+# knitr::kable(UniqueParents)
+# 
+# # # summary for family size
+# options(digits = 2) 
+# lapply(UniqueParents, function(df)
+#   sapply(df["n"], table))
+# lapply(UniqueParents, function(df)
+#   sapply(df["n"], summary))
+# 
+# map(UniqueParents, ggplot(.) + geom_histogram(aes(n)))
+# 
+# ggplot(UniqueParents[[1]]) + geom_histogram(aes(n))
+# ggplot(UniqueParents[[2]]) + geom_histogram(aes(n))
+# ggplot(UniqueParents[[3]]) + geom_histogram(aes(n))
+# ############################## map(~ggplot(mtcars, aes_string(x = .)) + geom_histogram())
+# 
+# map(WFU_Mitchell_test, ~ count(., Dames))
+# map(WFU_Mitchell_test, ~ count(., Sires))
+# 
+# # # tabulate by sex and parents
+# 
+# # highlight <- createStyle()
+# # conditionalFormatting(WFU_Mitchell_1, )
+# 
+# # check coatcolor 
+# lapply(WFU_Mitchell_test, function(df)
+#   sapply(df["coatcolor"], unique))
+# WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
+# # check coatcolor consistency with
+# # lapply(WFU_Mitchell_test, function(df)
+# # sapply(df["coatcolor"], unique))
+# 
+# # # check data type 
+# str(WFU_Mitchell_test)
+# 
+# # # create log table to be imported into sql
+# 
+# # 
 
 ######################
 ## Olivier(Cocaine) ##
 ######################
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
-WFU_Olivier_co <- u01.importxlsx("UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx")
+WFU_OlivierCocaine <- u01.importxlsx("UCSD(SCRIPPS) Cocaine Master Shipping sheet.xlsx")
 
 # following instructions from Angela Beeson at WFU :
 # "first two were the beginning of my lab managers recording and were done a little different"
 # "the left side were all sires and the right side were all dams"(email: 9/25)
-WFU_Olivier_co[1] <- lapply(WFU_Olivier_co[1], separate, col = Parents, into = c("sires", "dames"), sep = "[[:space:]][x|X][[:space:]]") # col argument draws from tidyverse::vars_pull, which only returns only one column name
-WFU_Olivier_co[2] <- lapply(WFU_Olivier_co[2], separate, col = 'Parent ID\'s', into = c("sires", "dames"), sep = "[[:space:]]*[x|X][[:space:]]*") # some entries do not have the wrapping spaces i.e. rows [14, 45, 46] 
+WFU_OlivierCocaine[1] <- lapply(WFU_OlivierCocaine[1], separate, col = Parents, into = c("sires", "dames"), sep = "[[:space:]][x|X][[:space:]]") # col argument draws from tidyverse::vars_pull, which only returns only one column name
+WFU_OlivierCocaine[2] <- lapply(WFU_OlivierCocaine[2], separate, col = 'Parent ID\'s', into = c("sires", "dames"), sep = "[[:space:]]*[x|X][[:space:]]*") # some entries do not have the wrapping spaces i.e. rows [14, 45, 46] 
 
 # change irregular data types (case by case)
-WFU_Olivier_co[[1]]$`Transponder ID` <- as.character(WFU_Olivier_co[[1]]$`Transponder ID`) # from numeric to character
-WFU_Olivier_co[[3]]$`Animal #` <- as.character(WFU_Olivier_co[[3]]$`Animal #`)
-WFU_Olivier_co[[4]]$`Animal #` <- as.character(WFU_Olivier_co[[4]]$`Animal #`)
+WFU_OlivierCocaine[[1]]$`Transponder ID` <- as.character(WFU_OlivierCocaine[[1]]$`Transponder ID`) # from numeric to character
+WFU_OlivierCocaine[[3]]$`Animal #` <- as.character(WFU_OlivierCocaine[[3]]$`Animal #`)
+WFU_OlivierCocaine[[4]]$`Animal #` <- as.character(WFU_OlivierCocaine[[4]]$`Animal #`)
 
 
 # 12/10 add shipment 10
-WFU_Olivier_co[10:11] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(3, 1)] # scrubs last
+WFU_OlivierCocaine[10:11] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(3, 1)] # scrubs last
 
 # set column names without "Cocaine and date" header
-WFU_Olivier_co[5:11] <- lapply(WFU_Olivier_co[5:11], 
+WFU_OlivierCocaine[5:11] <- lapply(WFU_OlivierCocaine[5:11], 
                               function(x){
                                 names(x) <- x[1,] %>% as.character()
                                 x <- x[-1, ]
                                 return(x)})
 
-WFU_Olivier_co[c(5:7)] <- lapply(WFU_Olivier_co[c(5:7)], 
+WFU_OlivierCocaine[c(5:7)] <- lapply(WFU_OlivierCocaine[c(5:7)], 
                               function(x){
                                 names(x)[1:2] <- x[1,1:2] %>% as.character()
                                 x <- x[-1, ]
                                 return(x)})
 
-names(WFU_Olivier_co[[10]])[1:3] <- WFU_Olivier_co[[10]][1,1:3] %>% as.character()
-WFU_Olivier_co[[10]] <- WFU_Olivier_co[[10]][, -(16:17) ]
-WFU_Olivier_co[[10]] %<>% 
+names(WFU_OlivierCocaine[[10]])[1:3] <- WFU_OlivierCocaine[[10]][1,1:3] %>% as.character()
+WFU_OlivierCocaine[[10]] <- WFU_OlivierCocaine[[10]][, -(16:17) ]
+WFU_OlivierCocaine[[10]] %<>% 
   mutate(Sires = lead(Sires), 
          Dames = lead(Dames),
          `Animal ID` = lead(`Animal ID`))
 
 # clean first table to prevent code from confusing the dup shipment date columns
-WFU_Olivier_co[[1]] <- WFU_Olivier_co[[1]][, -c(which(names(WFU_Olivier_co[[1]])== "Cage Pair"):ncol(WFU_Olivier_co[[1]]))] # column 16 to end 
+WFU_OlivierCocaine[[1]] <- WFU_OlivierCocaine[[1]][, -c(which(names(WFU_OlivierCocaine[[1]])== "Cage Pair"):ncol(WFU_OlivierCocaine[[1]]))] # column 16 to end 
 
 # # make variable names consistent
-WFU_Olivier_co_test <- uniform.var.names.testingu01(WFU_Olivier_co)
+WFU_OlivierCocaine_test <- uniform.var.names.testingu01(WFU_OlivierCocaine)
 
 
 # create the naive/scrubs dataset before removing the na rows and clean up naive dataset 
-names(WFU_Olivier_co_test) <- append(names(WFU_Olivier_co)[1:9], c("#10(10-28-2019)", "#10(Scrubs)"))
-WFU_Olivier_co_naive_test <- lapply(WFU_Olivier_co_test, function(df) {
+names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)"))
+WFU_OlivierCocaine_naive_test <- lapply(WFU_OlivierCocaine_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
 }) %>% rbindlist(use.names=T, idcol = "cohort") 
 
-WFU_Olivier_co_naive_test <- WFU_Olivier_co_test$`#10(Scrubs)` %>%  
+WFU_OlivierCocaine_naive_test <- WFU_OlivierCocaine_test$`#10(Scrubs)` %>%  
   mutate(cohort = "#10(10-28-2019)") %>%
-  rbind(WFU_Olivier_co_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
+  rbind(WFU_OlivierCocaine_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
 # remove from olivier dataframe
-WFU_Olivier_co_test[[10]] <- rbind(WFU_Olivier_co_test[[10]], WFU_Olivier_co_test[["#10(Scrubs)"]])
-WFU_Olivier_co_test[["#10(Scrubs)"]] <- NULL
+WFU_OlivierCocaine_test[[10]] <- rbind(WFU_OlivierCocaine_test[[10]], WFU_OlivierCocaine_test[["#10(Scrubs)"]])
+WFU_OlivierCocaine_test[["#10(Scrubs)"]] <- NULL
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
 
 # 11/7 rather than removing the scrubs, we will be commenting scrub status to each animal
-# WFU_Olivier_co_test <- remove.scrubs.and.narows(WFU_Olivier_co_test) # XX changed the function, test if more efficient 
+# WFU_OlivierCocaine_test <- remove.scrubs.and.narows(WFU_OlivierCocaine_test) # XX changed the function, test if more efficient 
 
 # change date type
 # placed in this order to prevent excessive nas being introduced by coercion
-WFU_Olivier_co_test[[10]][which(WFU_Olivier_co_test[[10]]$dow == "10/31/20169"),]$dow <- "43769"
-WFU_Olivier_co_test <- uniform.date.testingu01(WFU_Olivier_co_test)
+WFU_OlivierCocaine_test[[10]][which(WFU_OlivierCocaine_test[[10]]$dow == "10/31/20169"),]$dow <- "43769"
+WFU_OlivierCocaine_test <- uniform.date.testingu01(WFU_OlivierCocaine_test)
 
 # change box
-WFU_Olivier_co_test <- uniform.boxformat(WFU_Olivier_co_test)
+WFU_OlivierCocaine_test <- uniform.boxformat(WFU_OlivierCocaine_test)
 
 # change coat colors
-WFU_Olivier_co_test <- uniform.coatcolors(WFU_Olivier_co_test)
+WFU_OlivierCocaine_test <- uniform.coatcolors(WFU_OlivierCocaine_test)
 
 # # add age of shipment and check consistency
-WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
+WFU_OlivierCocaine_test <- lapply(WFU_OlivierCocaine_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
  # cohort 3 is slightly older
 
 counter = 0
-purrr::walk(WFU_Olivier_co_test, function(x){
+purrr::walk(WFU_OlivierCocaine_test, function(x){
   counter <<- counter + 1
   if(any(na.exclude(x$shipmentage) > 65)){
     print(paste0("Cohort ", counter, " has animals that were too old to ship"))
@@ -722,13 +722,13 @@ purrr::walk(WFU_Olivier_co_test, function(x){
 
 # # add age of wean and check consistency
 ### notes from Angela at WFU at 11/14/2019 11:32 AM  "The 4 from cocaine should have had a wean date of 9-17-17. "
-WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, function(x) {
+WFU_OlivierCocaine_test <- lapply(WFU_OlivierCocaine_test, function(x) {
   x$dow[which(x$rfid %in% c("933000120138309", "933000120138318", "933000120138326", "933000120138317"))] <- as.POSIXct("2017-09-17", tz = "UTC")
   return(x)})
 
-WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
+WFU_OlivierCocaine_test <- lapply(WFU_OlivierCocaine_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
 counter = 0
-purrr::walk(WFU_Olivier_co_test, function(x){
+purrr::walk(WFU_OlivierCocaine_test, function(x){
   counter <<- counter + 1
   if(any(na.exclude(x$weanage) > 25)){
     print(paste0("Cohort ", counter, " has animals that weaned too old"))
@@ -738,39 +738,39 @@ purrr::walk(WFU_Olivier_co_test, function(x){
   invisible(print(summary))
 })
 
-WFU_Olivier_co_test[[10]] %>% dplyr::filter(weanage > 25) # XX note to Oksana
+WFU_OlivierCocaine_test[[10]] %>% dplyr::filter(weanage > 25) # XX note to Oksana
 
 # # checking id vars
 idcols <- c("labanimalid", "accessid", "rfid")
-unique.values.length.by.col(WFU_Olivier_co_test, idcols) %>% invisible()
+unique.values.length.by.col(WFU_OlivierCocaine_test, idcols) %>% invisible()
 
 # # add comment and resolution and check consistency 
-WFU_Olivier_co_test <- lapply(WFU_Olivier_co_test, cbind, comment = NA, resolution = NA)
+WFU_OlivierCocaine_test <- lapply(WFU_OlivierCocaine_test, cbind, comment = NA, resolution = NA)
 
 # # checking the number of rfid digits
 
-lapply(WFU_Olivier_co_test, function(x){
+lapply(WFU_OlivierCocaine_test, function(x){
  x %>%
     dplyr::mutate(rfid_digits = nchar(rfid)) %>%
     dplyr::filter(rfid_digits != 15)
 })
 
 # rename all sheets (with correct cohort format)
-names(WFU_Olivier_co_test) <- append(names(WFU_Olivier_co)[1:9], "#10(10-28-2019)")
-WFU_Olivier_co_test_df <- rbindlist(WFU_Olivier_co_test, id = "cohort", fill = T)
-WFU_Olivier_co_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
+names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], "#10(10-28-2019)")
+WFU_OlivierCocaine_test_df <- rbindlist(WFU_OlivierCocaine_test, id = "cohort", fill = T)
+WFU_OlivierCocaine_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
                              cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
 
 # append naive/scrub comment to dataframe
 # # add comment of scrubs for matching rfid 
-WFU_Olivier_co_test_df <- WFU_Olivier_co_test_df %>% 
-  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_co_naive_test$rfid, "Scrub", WFU_Olivier_co_test_df$comment)) %>% 
+WFU_OlivierCocaine_test_df <- WFU_OlivierCocaine_test_df %>% 
+  dplyr::mutate(comment = ifelse(rfid %in% WFU_OlivierCocaine_naive_test$rfid, "Scrub", WFU_OlivierCocaine_test_df$comment)) %>% 
   dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
 # to check if all naive cases were identified: all 15 in each cohort (5-9) were found
-# WFU_Olivier_co_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
+# WFU_OlivierCocaine_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
 
 # check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
-WFU_Olivier_co_test_df %>%
+WFU_OlivierCocaine_test_df %>%
   dplyr::filter(grepl("^HS", labanimalid)) %>% 
   mutate(sex_fromid = substr(labanimalid, 3, 3)) %>% 
   dplyr::filter(sex_fromid != sex ) # nothing wrong 
@@ -780,7 +780,7 @@ WFU_Olivier_co_test_df %>%
 # id is the letter followed by numbers and number should all be number (currently mistranslated -- should be fixed now)
 
 ## check # siblings from prev cohort 
-WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine") %>% 
+WFU_OlivierCocaine_test_df %>% mutate(U01 = "OlivierCocainecaine") %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
@@ -795,7 +795,7 @@ WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine") %>%
   arrange(U01, sires) %>%
   data.frame() 
 
-sibs_matches_cocaine <- WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine") %>% 
+sibs_matches_cocaine <- WFU_OlivierCocaine_test_df %>% mutate(U01 = "OlivierCocainecaine") %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
@@ -810,89 +810,89 @@ sibs_matches_cocaine <- WFU_Olivier_co_test_df %>% mutate(U01 = "Olivier_cocaine
   arrange(U01, sires) %>%
   data.frame() %>% 
   select(sires, dames)
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10", sires %in% sibs_matches_cocaine$sires, dames %in% sibs_matches_cocaine$dames)
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "10", sires %in% sibs_matches_cocaine$sires, dames %in% sibs_matches_cocaine$dames)
 
 ## check # of same sex siblings (diff litter)
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, sex)
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check # of same sex littermates (same litter)
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "10") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% 
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "10") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "10") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table()
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "10") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table()
 
 ######################
 # Olivier(Oxycodone) #
 ######################
-WFU_Olivier_ox <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
+WFU_OlivierOxycodone <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
 
 WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
 
-WFU_Olivier_ox[6:7] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(2, 1)] # scrubs last
+WFU_OlivierOxycodone[6:7] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(2, 1)] # scrubs last
 
-WFU_Olivier_ox[c(1:5, 7)] <- lapply(WFU_Olivier_ox[c(1:5, 7)], function(x){
+WFU_OlivierOxycodone[c(1:5, 7)] <- lapply(WFU_OlivierOxycodone[c(1:5, 7)], function(x){
   names(x) <- x[1, ] %>% as.character
   x <- x[-1, ]
 }) # remove first row of all tables prep for uniform variable name fxn
 
-WFU_Olivier_ox[[1]] <- WFU_Olivier_ox[[1]][, -c(16:18), drop = F]
-WFU_Olivier_ox_test <- uniform.var.names.testingu01(WFU_Olivier_ox)
+WFU_OlivierOxycodone[[1]] <- WFU_OlivierOxycodone[[1]][, -c(16:18), drop = F]
+WFU_OlivierOxycodone_test <- uniform.var.names.testingu01(WFU_OlivierOxycodone)
 
 ## XX NOTE THAT YOU HAVE NOT PROCESSED THE DATA (clean coat colors and dates)
 # create the naive/scrubs dataset before removing it and clean up naive dataset 
-names(WFU_Olivier_ox_test) <- append(names(WFU_Olivier_ox)[1:5], c("#6(10-28-2019)", "#6(Scrubs)"))
-WFU_Olivier_ox_naive_test <- lapply(WFU_Olivier_ox_test, function(df) {
+names(WFU_OlivierOxycodone_test) <- append(names(WFU_OlivierOxycodone)[1:5], c("#6(10-28-2019)", "#6(Scrubs)"))
+WFU_OlivierOxycodone_naive_test <- lapply(WFU_OlivierOxycodone_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
 }) %>% rbindlist(fill=T, idcol = "cohort") 
 
-WFU_Olivier_ox_naive_test <- WFU_Olivier_ox_test$`#6(Scrubs)` %>%  
+WFU_OlivierOxycodone_naive_test <- WFU_OlivierOxycodone_test$`#6(Scrubs)` %>%  
   mutate(cohort = "#6(10-28-2019)") %>%
-  rbind(WFU_Olivier_ox_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
+  rbind(WFU_OlivierOxycodone_naive_test,.) # order to preserve natural order # add scrubs from shipment #10 
 
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
-# WFU_Olivier_ox_test <- remove.scrubs.and.narows(WFU_Olivier_ox_test) # remove rows that don't have rfid to include the trailing date case in sheet 5
+# WFU_OlivierOxycodone_test <- remove.scrubs.and.narows(WFU_OlivierOxycodone_test) # remove rows that don't have rfid to include the trailing date case in sheet 5
 
 # change date type
-WFU_Olivier_ox_test[[2]]$shipmentdate <- as.POSIXct("2018-09-11", tz = "UTC") # must add shipment date to sheet 2 
-WFU_Olivier_ox_test[[6]][which(WFU_Olivier_ox_test[[6]]$dow == "10/31/20169"),]$dow <- "43769"
-WFU_Olivier_ox_test <- uniform.date.testingu01(WFU_Olivier_ox_test)
+WFU_OlivierOxycodone_test[[2]]$shipmentdate <- as.POSIXct("2018-09-11", tz = "UTC") # must add shipment date to sheet 2 
+WFU_OlivierOxycodone_test[[6]][which(WFU_OlivierOxycodone_test[[6]]$dow == "10/31/20169"),]$dow <- "43769"
+WFU_OlivierOxycodone_test <- uniform.date.testingu01(WFU_OlivierOxycodone_test)
 
 # because of inconsistent date types, remove from olivier dataframe
-WFU_Olivier_ox_test[[6]] <- rbind(WFU_Olivier_ox_test[[6]], WFU_Olivier_ox_test[[7]])
-WFU_Olivier_ox_test[[7]] <- NULL
+WFU_OlivierOxycodone_test[[6]] <- rbind(WFU_OlivierOxycodone_test[[6]], WFU_OlivierOxycodone_test[[7]])
+WFU_OlivierOxycodone_test[[7]] <- NULL
 
 
 # make shipment box uniform ** EXPERIMENTER SPECIFIC ** BOX 3  to 3
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x){
+WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, function(x){
   x$shipmentbox <- stringr::str_extract(x$shipmentbox, "\\d+")
   return(x)
 })
 
 # check id values 
-unique.values.length.by.col(WFU_Olivier_ox_test, idcols)
+unique.values.length.by.col(WFU_OlivierOxycodone_test, idcols)
 
 # # checking the number of rfid digits
 
-lapply(WFU_Olivier_ox_test, function(x){
+lapply(WFU_OlivierOxycodone_test, function(x){
   x %>%
     mutate(rfid_digits = nchar(rfid)) %>%
     dplyr::filter(rfid_digits != 15)
 })
 
 # change coat colors
-WFU_Olivier_ox_test <- uniform.coatcolors(WFU_Olivier_ox_test)
+WFU_OlivierOxycodone_test <- uniform.coatcolors(WFU_OlivierOxycodone_test)
 
 # # add age of shipment and check consistency
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
+WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
 
 counter = 0
-purrr::walk(WFU_Olivier_ox_test, function(x){
+purrr::walk(WFU_OlivierOxycodone_test, function(x){
   counter <<- counter + 1
   if(any(na.exclude(x$shipmentage) > 65)){
     print(paste0("Cohort ", counter, " has animals that were too old to ship"))
@@ -904,13 +904,13 @@ purrr::walk(WFU_Olivier_ox_test, function(x){
 
 # # add age of wean and check consistency
 ### notes from Angela at WFU at 11/14/2019 11:32 AM "The one from Oxycodone had a wean date of 8-24-18."
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, function(x) {
+WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, function(x) {
   x$dow[which(x$rfid == "933000320046005")] <- as.POSIXct("2018-08-24", tz = "UTC")
   return(x)})
 
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
+WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
 counter = 0
-purrr::walk(WFU_Olivier_ox_test, function(x){
+purrr::walk(WFU_OlivierOxycodone_test, function(x){
   counter <<- counter + 1
   if(any(na.exclude(x$weanage) > 25)){
     print(paste0("Cohort ", counter, " has animals that weaned too old"))
@@ -920,33 +920,33 @@ purrr::walk(WFU_Olivier_ox_test, function(x){
   invisible(print(summary))
 })
 
-WFU_Olivier_ox_test[[6]] %>% dplyr::filter(weanage > 25) %>% select(labanimalid) %>% unlist() %>% as.character() # XX note to Oksana
+WFU_OlivierOxycodone_test[[6]] %>% dplyr::filter(weanage > 25) %>% select(labanimalid) %>% unlist() %>% as.character() # XX note to Oksana
 
 
 # # add comment and resolution and check consistency (NO NEED BECAUSE IT ALREADY EXISTS)
-WFU_Olivier_ox_test <- lapply(WFU_Olivier_ox_test, cbind, comment = NA, resolution = NA)
+WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, cbind, comment = NA, resolution = NA)
 
 # rename all sheets 
-names(WFU_Olivier_ox_test) <- append(WFU_Olivier_sheetnames, "#6(10-28-19)" )
+names(WFU_OlivierOxycodone_test) <- append(WFU_Olivier_sheetnames, "#6(10-28-19)" )
 
-WFU_Olivier_ox_test_df <- rbindlist(WFU_Olivier_ox_test, id = "cohort", fill = T)
-WFU_Olivier_ox_test_df <- WFU_Olivier_ox_test_df %>% 
-  dplyr::mutate(comment = ifelse(rfid %in% WFU_Olivier_ox_naive_test$rfid, "Scrub", comment),
+WFU_OlivierOxycodone_test_df <- rbindlist(WFU_OlivierOxycodone_test, id = "cohort", fill = T)
+WFU_OlivierOxycodone_test_df <- WFU_OlivierOxycodone_test_df %>% 
+  dplyr::mutate(comment = ifelse(rfid %in% WFU_OlivierOxycodone_naive_test$rfid, "Scrub", comment),
                 cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
                 cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort))) %>% 
   dplyr::filter(grepl("^(?=\\d)", rfid, perl = T)) 
 
-# rbindlist(WFU_Olivier_ox_naive_test, use.names=T)$rfid %>% length() and WFU_Olivier_ox_test_df %>% dplyr::filter(!is.na(comment)) %>% dim() 
+# rbindlist(WFU_OlivierOxycodone_naive_test, use.names=T)$rfid %>% length() and WFU_OlivierOxycodone_test_df %>% dplyr::filter(!is.na(comment)) %>% dim() 
 # BOTH EQUAL 75 SO THE CODE WORKS
 
 # check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
-WFU_Olivier_ox_test_df %>%
+WFU_OlivierOxycodone_test_df %>%
   dplyr::filter(grepl("^HS", labanimalid)) %>% 
   mutate(sex_fromid = substr(labanimalid, 3, 3)) %>% 
   dplyr::filter(sex_fromid != sex ) # nothing wrong 
 
 ## check # siblings from prev cohort 
-WFU_Olivier_ox_test_df %>% mutate(U01 = "Olivier_oxy") %>% 
+WFU_OlivierOxycodone_test_df %>% mutate(U01 = "OlivierOxycodoney") %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
@@ -961,7 +961,7 @@ WFU_Olivier_ox_test_df %>% mutate(U01 = "Olivier_oxy") %>%
   arrange(U01, sires) %>%
   data.frame() 
 
-# shareparents_oxy <- WFU_Olivier_ox_test_df %>% mutate(U01 = "Olivier_oxy") %>% 
+# shareparents_oxy <- WFU_OlivierOxycodone_test_df %>% mutate(U01 = "OlivierOxycodoney") %>% 
 #   group_by(sires, dames, cohort, U01) %>% 
 #   add_count() %>% 
 #   select(U01, sires, dames, cohort, n) %>% 
@@ -975,16 +975,16 @@ WFU_Olivier_ox_test_df %>% mutate(U01 = "Olivier_oxy") %>%
 #   unique() %>% 
 #   arrange(U01, sires) %>%
 #   data.frame() %>% select(sires, dames)
-# WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06", sires %in% shareparents_oxy$sires, dames %in% shareparents_oxy$dames) %>% select(labanimalid) %>% unlist() %>% as.character()
+# WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "06", sires %in% shareparents_oxy$sires, dames %in% shareparents_oxy$dames) %>% select(labanimalid) %>% unlist() %>% as.character()
 
 ## check # of same sex siblings (diff litter)
-WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, sex) # if scrubs is not important, this code works, otherwise, add is.na(comment)
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, sex) # if scrubs is not important, this code works, otherwise, add is.na(comment)
 
 ## check # of same sex littermates (same litter)
-WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06", is.na(comment)) %>% janitor::get_dupes(sires, dames, litternumber, sex)%>% dim #19 pairs
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "06", is.na(comment)) %>% janitor::get_dupes(sires, dames, litternumber, sex)%>% dim #19 pairs
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_Olivier_ox_test_df %>% dplyr::filter(cohort == "06") %>% 
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "06") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Olivier_co_test_df %>% dplyr::filter(cohort == "06") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "06") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
 
