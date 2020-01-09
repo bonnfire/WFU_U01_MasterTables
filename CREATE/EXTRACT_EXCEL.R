@@ -111,6 +111,14 @@ uniform.boxformat <- function(df){
   })
 }
 
+master_df <- function(x){
+  x$cohort <- ifelse(grepl("#", x$cohort), stringr::str_match(x$cohort, "#(\\d+).*?")[,2], x$cohort)
+  x$cohort <- ifelse(nchar(x$cohort) > 1, x$cohort, gsub('([[:digit:]]{1})$', '0\\1', x$cohort)) # add leading zeroes when necessary
+  x$litternumber = as.numeric(x$litternumber)
+  x$littersize = as.numeric(x$littersize)
+  return(x)
+  }
+
 ## all user-defined functions for quality check and validation ## 
 # QC <- function(df){
 #   lapply(seq_along(df), function(i){
@@ -378,8 +386,12 @@ names(WFU_Jhou)[12] <- "#12(10-08-2019)"
 WFU_Jhou[[13]] <- u01.importxlsx("Jhou #13 Shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
 names(WFU_Jhou)[13] <- "#13(11-19-2019)" 
 
+## 1/9 add cohort
+WFU_Jhou[[14]] <- u01.importxlsx("Jhou #14 Shipping Sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
+WFU_Jhou_test[[14]]$rfid = as.character(WFU_Jhou_test[[14]]$rfid)
 
 # experiment/table specific: remove empty columns 16-18
 WFU_Jhou_test[[1]] <- WFU_Jhou_test[[1]][, -c(16:18), drop = F] # drop = F retains data type
@@ -428,12 +440,38 @@ WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
 names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
-WFU_Jhou_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
-                             cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
+WFU_Jhou_test_df %<>% mutate(cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
 
 # check number of rat siblings in each cohort # cohort 13 has all two siblings
 # and 
 # make sure that cohort pairs don't spill into another # no new cases from cohort 13
+
+## check no siblings from prev cohort 
+WFU_Jhou_test_df %>% mutate(U01 = "Jhou") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "14") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
+
+## check no same sex siblings (diff litter)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% janitor::get_dupes(sires, dames, sex)
+
+## check no same sex littermates (same litter)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% group_by(rack) %>% count(sex) 
 
 
 
@@ -497,6 +535,7 @@ WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
 names(WFU_Mitchell_test) <- names(WFU_Mitchell) 
 
 WFU_Mitchell_test_df <- rbindlist(WFU_Mitchell_test, id = "cohort", fill = T)
+WFU_Mitchell_test_df <- master_df(WFU_Mitchell_test_df)
 
 ## XX INCOMPLETE  
 # # # validate dates 
