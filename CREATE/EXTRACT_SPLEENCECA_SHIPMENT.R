@@ -246,14 +246,8 @@ mitchell_ceca_shipments <- mitchell_ceca_shipments %>%
 ###########################
 ###### ALL EXTRACTION #####
 ###########################
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
 
-u01_khai_spleens <- u01.importxlsx("U01 spleen extraction database.xlsx")
-# uniform.var.names.testingu01(u01_khai_spleens)
 
-u01_khai_spleens  
-
-  
 
 
 
