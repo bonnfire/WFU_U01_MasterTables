@@ -28,31 +28,28 @@ extractions_khai_df <- lapply(extractions_khai_original, function(x){
 names(extractions_khai_df) <- mgsub::mgsub(tolower(names(extractions_khai_df)), 
                                            c("[#]", "[[:space:]]|[.]|[[:punct:]]$", "[[:punct:]]"), 
                                            c("num", "", "_"))
-extractions_khai_df %>% 
-  subset(`sampleid_barcode` %in% flow_cell_original_rip$`Sample ID`) %>% 
-  mutate_at(vars(one_of("u01", "comments")), as.factor) %>% 
-  summary()
 
 extractions_khai_df <- extractions_khai_df %>%
   dplyr::filter(u01 != "Template") %>% 
   mutate(u01_rfid_verified = case_when(
     transponder %in%  WFU_OlivierCocaine_test_df$rfid ~ "u01_olivier_cocaine",
-    transponder == "933000120117313" ~ "u01_olivier_cocaine",
+    # transponder == "933000120117313" ~ "u01_olivier_cocaine",
     transponder %in%  WFU_OlivierOxycodone_test_df$rfid ~ "u01_olivier_oxycodone",
     transponder %in%  WFU_Jhou_test_df$rfid ~ "u01_jhou",
     transponder %in%  WFU_Mitchell_test_df$rfid ~ "u01_mitchell",
-    TRUE ~ "NA"))
-  #   ,
-  # u01 = paste0(gsub("u01_", "", u01_rfid_verified), "_", origin))
-
-WFU_OlivierCocaine_test_df %>% subset(rfid %in% c("933000320047386", "933000320046848"))
+    TRUE ~ "NA")) %>% 
+  select(-u01) %>%  
+  left_join(., shipments_df[,c("rfid", "cohort", "u01")], by = c("transponder"="rfid")) %>% 
+  mutate(u01 = paste0(u01, "_", cohort)) %>% 
+  select(-cohort)
+# origin is not cohort
+# WFU_OlivierCocaine_test_df %>% subset(rfid %in% c("933000320047386", "933000320046848"))
 
 extractions_khai_df$u01_rfid_verified %>% table()
 extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
-table(paste0(gsub("u01_olivier_", "", extractions_flowcell$u01_rfid_verified), "_", extractions_flowcell$origin), extractions_flowcell$userid)
 
-extractions_khai_df %>% mutate_at(vars(one_of("u01", "comments")), as.factor) %>% 
-  summary()
+# extractions_khai_df %>% mutate_at(vars(one_of("u01", "comments")), as.factor) %>% 
+#   summary()
 # extractions_khai_df %>% dplyr::filter(u01 != "Template") %>% dplyr::filter(u01!=dnaplatecode) # note that olivier c06 shares with mitchell c01
 
 ## INVESTIGATE THIS
@@ -60,17 +57,22 @@ extractions_khai_df %>% mutate_at(vars(one_of("u01", "comments")), as.factor) %>
 # extractions_flowcell %>% subset(transponder %in% WFU_OlivierCocaine_test_df$rfid) %>% dim
 # extractions_flowcell %>% subset(transponder %in% WFU_OlivierOxycodone_test_df$rfid) %>% dim
 
-WFU_Olivier <- bind_rows(WFU_OlivierCocaine_test_df, WFU_OlivierOxycodone_test_df)
+#### SENT TO SEQUENCING CORE
 extractions_flowcell <- extractions_khai_df %>% 
-  subset(`sampleid_barcode` %in% flow_cell_original_rip$`Sample ID`) %>% # 288
-  left_join(., WFU_Olivier[,c("rfid", "cohort")], by = c("transponder"="rfid")) %>% 
-  mutate(u01 = paste0(gsub("u01_", "", extractions_flowcell$u01_rfid_verified), cohort)) %>% 
-  select(-cohort)
-extractions_flowcell$u01 %>% table() 
+  subset(`sampleid_barcode` %in% flow_cell_original_rip$`Sample ID`) # 288
 
-extractions_flowcell$origin %>% table()
+text(barplot(table(extractions_flowcell$u01), beside = T), 0, table(extractions_flowcell$u01))
+table(extractions_flowcell$u01, extractions_flowcell$userid)
+
+# using origin will get you the wrong cohorts?
+
+extractions_flowcell$u01 %>% table() 
+extractions_flowcell$u01_rfid_verified %>% table() 
+
+# extractions_flowcell$origin %>% table()
 
 olivier_spleen_list_df %>% subset(rfid %in% extractions_flowcell[which(extractions_flowcell$comments == "mismatch"),]$transponder)
+extractions_flowcell[which(extractions_flowcell$comments == "mismatch"),]
 extractions_flowcell %>% subset(comments == "mismatch")
 # searching for duplicate entries in the sampleid barcode column FALSE FOR BOTH extractions_flowcell %>% select(transponder AND sampleid_barcode) %>% duplicated() %>% any() 
 agrep("933000120117342", extractions_flowcell$transponder, value = T)
@@ -96,9 +98,26 @@ extractions_flowcell %>%
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=25,face="bold"))
 
+
+extractions_flowcell %>% dplyr::filter(u01 == "Olivier_Co_03") %>% 
+  ggplot(aes(x = `u01`, y = `nanodropng_ul`, fill = userid)) + 
+  geom_boxplot() + 
+  labs(title = paste0("Nanodrop(ng/ul) values by U01")) +
+  theme(axis.text=element_text(size=20),
+        axis.title=element_text(size=25,face="bold"))
+
 extractions_flowcell %>% 
-  ggplot(aes(x = `260_280`)) + 
-  geom_histogram() + 
+  ggplot(aes(x = `260_280`, color = u01)) + 
+  geom_density() + 
+  # facet_grid(~ u01) +
+  labs(title = paste0("260_280 values by U01")) +
+  theme(axis.text=element_text(size=20),
+        axis.title=element_text(size=25,face="bold"),
+        legend.text=element_text(size=20))
+
+extractions_flowcell %>% 
+  ggplot(aes(x = `260_280`, color = u01)) + 
+  geom_density() + 
   facet_grid(~ u01) +
   labs(title = paste0("260_280 values by U01")) +
   theme(axis.text=element_text(size=20),
@@ -111,13 +130,21 @@ extractions_flowcell %>%
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=25,face="bold"))
 
-extractions_flowcell %>% 
-    ggplot(aes(x = `260_230`)) + 
-    geom_histogram() + 
-    facet_grid(~ u01) +
-    labs(title = paste0("260_230 values by U01")) + 
+extractions_flowcell %>% dplyr::filter(u01 == "Olivier_Co_03") %>% 
+  ggplot(aes(x = `u01`, y = `260_280`, fill = userid)) + 
+  geom_boxplot() + 
+  labs(title = paste0("260_280 values by U01")) + 
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=25,face="bold"))
+  
+extractions_flowcell %>% 
+    ggplot(aes(x = `260_230`, color = u01)) + 
+    geom_density() + 
+    # facet_grid(~ u01) +
+    labs(title = paste0("260_230 values by U01")) + 
+  theme(axis.text=element_text(size=20),
+        axis.title=element_text(size=25,face="bold"),
+        legend.text=element_text(size=20))
 
 
 extractions_flowcell %>% 
@@ -126,6 +153,14 @@ extractions_flowcell %>%
   labs(title = paste0("260_230 values by U01"))  + 
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=25,face="bold"))
+
+extractions_flowcell %>% dplyr::filter(u01 == "Olivier_Co_03") %>% 
+  ggplot(aes(x = `u01`, y = `260_230`, fill = userid)) + 
+  geom_boxplot() + 
+  labs(title = paste0("260_280 values by U01")) + 
+  theme(axis.text=element_text(size=20),
+        axis.title=element_text(size=25,face="bold"))
+
 
 # extractions_flowcell %>% 
 #   ggplot(aes(x = u01, y = `260_230`, color = comments)) + 
