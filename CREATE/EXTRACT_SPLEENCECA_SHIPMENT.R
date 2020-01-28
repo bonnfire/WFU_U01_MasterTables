@@ -211,4 +211,57 @@ saveWorkbook(wb, file = "olivier_spleen_cocaine_oxy_to_genotype.xlsx", overwrite
 #   createSpreadsheets(s,to_genotype_olivier_cocaine,to_genotype_olivier_oxy)
 # }
 
+###########################
+###### MITCHELL ###########
+###########################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
+mitchell_shipment3_spleenceca_original_excel <- u01.importxlsx("Shipping_Content_Lists_Shipment3.xlsx")
+mitchell_spleen_shipments <- mitchell_shipment3_spleenceca_original_excel$`Spleen Shipping Sheet` 
+mitchell_spleen_shipments <- mitchell_spleen_shipments %>% 
+  rename("rfid" = "ID", 
+         "dissectionorder" = "Dissection Order",
+         "barcodenum" = "Barcode #",
+         "shipmentbox" = "Shipping Box", 
+         "tissue" = "Tissue",
+         "microchip" = "Microchip",
+         "notes"= "Notes") %>% 
+  mutate(box = gsub("[^[:digit:].]", "", box))
+
+
+
+mitchell_ceca_shipments <- mitchell_shipment3_spleenceca_original_excel$`Ceca Shipping Sheet`
+mitchell_ceca_shipments <- mitchell_ceca_shipments %>% 
+  rename("rfid" = "RFID", 
+         "samplenum" = "Sample #",
+         "barcodenum" = "Barcode #",
+         "box" = "Box", 
+         "shipmentbox" = "Shipping Container", 
+         "tissue" = "Tissue Collected",
+         "notes"= "Dissection Comments")
+
+# mitchell_spleenceca_toprocess <- rbind(mitchell_spleen_shipments, mitchell_ceca_shipments)
+
+
+
+###########################
+###### ALL EXTRACTION #####
+###########################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
+
+u01_khai_spleens <- u01.importxlsx("U01 spleen extraction database.xlsx")
+# uniform.var.names.testingu01(u01_khai_spleens)
+
+u01_khai_spleens  
+
+  
+
+
+
+
+
+
+
+
+
+
 
