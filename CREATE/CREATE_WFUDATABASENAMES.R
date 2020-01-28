@@ -5,12 +5,12 @@
 #                     "Olivier_Co" = glimpse(WFU_Olivier_co_test_df), 
 #                     "Olivier_Oxy" = glimpse(WFU_Olivier_ox_test_df))
 
-shipments <- list("Kalivas_Italy" = WFU_Kalivas_Italy_test_df, 
+shipments <- list("Kalivas_Italy" = WFU_KalivasItaly_test_df, 
                   "Kalivas" = WFU_Kalivas_test_df,
                   "Jhou" = WFU_Jhou_test_df,
                   "Mitchell" = WFU_Mitchell_test_df,
-                  "Olivier_Co" = WFU_Olivier_co_test_df, 
-                  "Olivier_Oxy" = WFU_Olivier_ox_test_df)
+                  "Olivier_Co" = WFU_OlivierCocaine_test_df, 
+                  "Olivier_Oxy" = WFU_OlivierOxycodone_test_df)
 
 
 shipments <- lapply(shipments, function(x){
