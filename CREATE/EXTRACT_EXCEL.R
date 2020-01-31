@@ -1058,3 +1058,45 @@ WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>%
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
 WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
 
+
+
+
+################# MISC 
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/Misc Data")
+# 1/31 OKSANA PAUL #2 SHIPPING SHEET 
+## NY (he's at the University at Buffalo)
+
+NY_excel_orig <- u01.importxlsx("Paul #2 shipping sheet.xlsx")
+NY_excel_orig_test <- uniform.var.names.testingu01(NY_excel_orig)[[1]]
+
+
+## shareparents_oxy <- WFU_OlivierOxycodone_test_df %>% mutate(U01 = "OlivierOxycodoney") %>%
+group_by(sires, dames, cohort, U01) %>%
+  add_count() %>%
+  select(U01, sires, dames, cohort, n) %>%
+  ungroup() %>%
+  rename("siredamepair_in_cohort"="n") %>%
+  group_by(sires,dames, U01) %>%
+  add_count() %>%
+  rename("siredamepair_in_u01"="n") %>%
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>%
+  dplyr::filter(cohort == "07") %>%
+  unique() %>%
+  arrange(U01, sires) %>%
+  data.frame() %>% select(sires, dames)
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(sires %in% shareparents_oxy$sires, dames %in% shareparents_oxy$dames) 
+# %>% select(labanimalid) %>% unlist() %>% as.character()
+
+## check # of same sex siblings (diff litter)
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% janitor::get_dupes(sires, dames, sex) # if scrubs is not important, this code works, otherwise, add is.na(comment)
+
+## check # of same sex littermates (same litter)
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07", is.na(comment)) %>% janitor::get_dupes(sires, dames, litternumber, sex)%>% dim #12 pairs
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
+
+
+
