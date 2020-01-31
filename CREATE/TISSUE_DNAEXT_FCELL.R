@@ -31,15 +31,16 @@ names(extractions_khai_df) <- mgsub::mgsub(tolower(names(extractions_khai_df)),
 
 extractions_khai_df <- extractions_khai_df %>%
   dplyr::filter(u01 != "Template") %>% 
+  mutate(rfid = paste0("933000", sampleid_barcode)) %>% 
   mutate(u01_rfid_verified = case_when(
-    transponder %in%  WFU_OlivierCocaine_test_df$rfid ~ "u01_olivier_cocaine",
-    # transponder == "933000120117313" ~ "u01_olivier_cocaine",
-    transponder %in%  WFU_OlivierOxycodone_test_df$rfid ~ "u01_olivier_oxycodone",
-    transponder %in%  WFU_Jhou_test_df$rfid ~ "u01_jhou",
-    transponder %in%  WFU_Mitchell_test_df$rfid ~ "u01_mitchell",
+    rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "u01_olivier_cocaine",
+    # rfid == "933000120117313" ~ "u01_olivier_cocaine",
+    rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "u01_olivier_oxycodone",
+    rfid %in%  WFU_Jhou_test_df$rfid ~ "u01_jhou",
+    rfid %in%  WFU_Mitchell_test_df$rfid ~ "u01_mitchell",
     TRUE ~ "NA")) %>% 
   select(-u01) %>%  
-  left_join(., shipments_df[,c("rfid", "cohort", "u01")], by = c("transponder"="rfid")) %>% 
+  left_join(., shipments_df[,c("rfid", "cohort", "u01")], by = c("rfid")) %>% 
   mutate(u01 = paste0(u01, "_", cohort)) %>% 
   select(-cohort)
 # origin is not cohort
