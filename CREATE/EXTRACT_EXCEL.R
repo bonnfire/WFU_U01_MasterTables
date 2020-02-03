@@ -1099,7 +1099,8 @@ NY_excel_orig_test %<>%
   rename("dow" = "datewean",
          "shipmentdate" = "dateshipment",
          "dames" = "dam",
-         "sires" = "sire")
+         "sires" = "sire") %>% 
+  mutate(rfid = toupper(rfid))
 
 # because of inconsistent date types, remove from olivier dataframe
 # WFU_OlivierOxycodone_test[[6]] <- rbind(WFU_OlivierOxycodone_test[[6]], WFU_OlivierOxycodone_test[[7]])
