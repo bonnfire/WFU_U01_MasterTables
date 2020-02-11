@@ -218,14 +218,12 @@ setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_Shippin
 mitchell_shipment3_spleenceca_original_excel <- u01.importxlsx("Shipping_Content_Lists_Shipment3.xlsx")
 mitchell_spleen_shipments <- mitchell_shipment3_spleenceca_original_excel$`Spleen Shipping Sheet` 
 mitchell_spleen_shipments <- mitchell_spleen_shipments %>% 
-  rename("rfid" = "ID", 
-         "dissectionorder" = "Dissection Order",
-         "barcodenum" = "Barcode #",
-         "shipmentbox" = "Shipping Box", 
-         "tissue" = "Tissue",
-         "microchip" = "Microchip",
-         "notes"= "Notes") %>% 
-  mutate(box = gsub("[^[:digit:].]", "", box))
+  clean_names() %>% 
+  rename("rfid" = "id", 
+         "dissectionorder" = "dissection_order",
+         "barcodenum" = "barcode_number",
+         "shipmentbox" = "shipping_box") %>% 
+  mutate(shipmentbox = gsub("[^[:digit:].]", "", shipmentbox))
 
 
 
@@ -239,7 +237,7 @@ mitchell_ceca_shipments <- mitchell_ceca_shipments %>%
          "tissue" = "Tissue Collected",
          "notes"= "Dissection Comments")
 
-# mitchell_spleenceca_toprocess <- rbind(mitchell_spleen_shipments, mitchell_ceca_shipments)
+mitchell_spleenceca_toprocess <- plyr::rbind.fill(mitchell_spleen_shipments, mitchell_ceca_shipments)
 
 
 
