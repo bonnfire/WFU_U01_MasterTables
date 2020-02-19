@@ -376,6 +376,8 @@ WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% cou
 ######################
 ######## JHOU ########
 ######################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
+
 WFU_Jhou <- u01.importxlsx("Jhou Master Shipping Sheet.xlsx")
 
 # 12/10 Realized that I hadn't included Jhou #12

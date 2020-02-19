@@ -14,6 +14,25 @@ library(stringr)
 
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
 
+
+### extract khai's data
+# devtools::install_github("Displayr/flipAPI")
+library(flipAPI)
+khai_spleenextraction <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0")
+path <- "https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0"
+
+path %>% 
+  map(flipAPI::DownloadXLSX)
+
+khai_spleenextraction <- list()
+for(i in 1:8){
+  khai_spleenextraction[[i]] <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0", sheet = i)  
+}
+khai_spleenextraction_df <- khai_spleenextraction %>% rbindlist(fill = T)
+
+
+
+
 ###########################
 ###### JHOU ###############
 ###########################
@@ -26,6 +45,10 @@ names(jhou_spleen_test) <- mgsub::mgsub(names(jhou_spleen_test),
                                c(" |\\.", "#", "Transponder ID", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
                                c("", "Number", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
   tolower()
+
+
+jhou_extraction <- khai_spleenextraction_df %>% janitor::clean_names() %>% subset(grepl("jhou", dna_plate_code, ignore.case = T))
+
 
 
 ###########################
@@ -239,6 +262,28 @@ mitchell_ceca_shipments <- mitchell_ceca_shipments %>%
 
 mitchell_spleenceca_toprocess <- plyr::rbind.fill(mitchell_spleen_shipments, mitchell_ceca_shipments)
 
+
+###########################
+###### KALIVAS ############
+###########################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
+kalivas_spleenceca_original_excel <- u01.importxlsx("Kalivas U grant_Spleen collection_Cohort information.xlsx")[-1] %>% rbindlist(idcol = "cohort", fill = T) %>% #get rid of the timeline sheet because it gives us many unwanted columns
+  clean_names() %>% 
+  rename("rfid" = "microchip") %>% 
+  subset(grepl("Cohort", cohort)) %>% 
+  mutate(cohort = str_pad(str_extract(cohort, "\\d+"), 2, "left", "0"), sex = str_extract(toupper(sex), "\\D{1}")) %>% 
+  subset(grepl("^\\d+", rfid)) %>% 
+  select(-sex) %>% 
+  left_join(., WFU_Kalivas_test_df[, c("rfid", "sex", "cohort")], by = c("rfid", "cohort")) ## rfid and cohort match in the spleens
+
+# show to get the number of dead animals 
+# u01.importxlsx("Kalivas U grant_Spleen collection_Cohort information.xlsx")[-1] %>% rbindlist(idcol = "cohort", fill = T) %>% #get rid of the timeline sheet because it gives us many unwanted columns
+#   clean_names() %>% 
+#   rename("rfid" = "microchip",
+#          "status" = "cohort") %>% 
+#   subset(grepl("Dead", status)) %>% 
+#   select(-sex) %>% 
+#   left_join(., WFU_Kalivas_test_df[, c("rfid", "sex", "cohort")], by = c("rfid")) %>% select(cohort) %>% table()
 
 
 ###########################
