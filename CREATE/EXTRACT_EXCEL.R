@@ -344,6 +344,12 @@ names(WFU_Kalivas_test) <-  str_pad(seq(1:length(WFU_Kalivas_test)), 2, pad = "0
 
 WFU_Kalivas_test_df <- rbindlist(WFU_Kalivas_test, id = "cohort", fill = T)
 
+# make changes from README_MUSC Cohort 3 (Changed 2/20)
+WFU_Kalivas_test_df %<>% 
+  mutate(rfid = replace(rfid, labanimalid == "KAL105", "933000320047191"),
+         rfid = replace(rfid, labanimalid == "KAL106", "933000320047183"))
+
+
 
 ## check no siblings from prev cohort 
 WFU_Kalivas_test_df %>% mutate(U01 = "Kalivas") %>% 
