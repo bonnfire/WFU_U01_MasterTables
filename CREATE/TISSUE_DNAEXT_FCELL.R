@@ -193,3 +193,30 @@ extractions_hannah_df %>%
   dim()
 
 ## library in flow cell "Riptide-"01 to 03 seem to be line with the "Olivier"01-03 counts
+
+
+
+
+#### KHAI DNA EXTRACTION USING THE FLIPAPI
+
+names(khai_spleenextraction_df) <- mgsub::mgsub(tolower(names(khai_spleenextraction_df)), 
+                                           c("[#]", "[[:space:]]|[.]|[[:punct:]]$", "[[:punct:]]"), 
+                                           c("num", "", "_"))
+
+
+khai_spleenextraction_df <- khai_spleenextraction_df %>%
+  mutate_all(as.character) %>% 
+  mutate(rfid = paste0("933000", sampleid_barcode)) %>% 
+  mutate(u01_rfid_verified = case_when(
+    rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "u01_olivier_cocaine",
+    # rfid == "933000120117313" ~ "u01_olivier_cocaine",
+    rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "u01_olivier_oxycodone",
+    rfid %in%  WFU_Jhou_test_df$rfid ~ "u01_jhou",
+    rfid %in%  WFU_Mitchell_test_df$rfid ~ "u01_mitchell",
+    TRUE ~ "NA")) %>% 
+  left_join(., shipments_df[,c("rfid", "cohort", "u01")], by = c("rfid")) %>% 
+  mutate(u01 = paste0(u01, "_", cohort)) %>% 
+  select(-cohort)
+
+# origin is not cohort
+# WFU_OlivierCocaine_test_df %>% subset(rfid %in% c("933000320047386", "933000320046848"))

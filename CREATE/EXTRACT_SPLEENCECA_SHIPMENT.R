@@ -32,18 +32,17 @@ khai_spleenextraction_df <- khai_spleenextraction %>% rbindlist(fill = T)
 
 
 
-
 ###########################
 ###### JHOU ###############
 ###########################
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster/TissueShipments")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")
 jhou_spleen_raw <- read_excel(path = "Jhou U01 Spleen and Ceca shipment.xlsx", col_names = F)
 jhou_spleen_test <- jhou_spleen_raw
 names(jhou_spleen_test) <- jhou_spleen_raw[1,] %>% as.character()
 jhou_spleen_test <- jhou_spleen_test[-1,]
 names(jhou_spleen_test) <- mgsub::mgsub(names(jhou_spleen_test),
-                               c(" |\\.", "#", "Transponder ID", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
-                               c("", "Number", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
+                               c(" |\\.", "Microchip ID#", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                               c("", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
   tolower()
 
 
@@ -237,7 +236,7 @@ saveWorkbook(wb, file = "olivier_spleen_cocaine_oxy_to_genotype.xlsx", overwrite
 ###########################
 ###### MITCHELL ###########
 ###########################
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")
 mitchell_shipment3_spleenceca_original_excel <- u01.importxlsx("Shipping_Content_Lists_Shipment3.xlsx")
 mitchell_spleen_shipments <- mitchell_shipment3_spleenceca_original_excel$`Spleen Shipping Sheet` 
 mitchell_spleen_shipments <- mitchell_spleen_shipments %>% 
@@ -266,7 +265,7 @@ mitchell_spleenceca_toprocess <- plyr::rbind.fill(mitchell_spleen_shipments, mit
 ###########################
 ###### KALIVAS ############
 ###########################
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")
 kalivas_spleenceca_original_excel <- u01.importxlsx("Kalivas U grant_Spleen collection_Cohort information.xlsx")[-1] %>% rbindlist(idcol = "cohort", fill = T) %>% #get rid of the timeline sheet because it gives us many unwanted columns
   clean_names() %>% 
   rename("rfid" = "microchip") %>% 
