@@ -189,6 +189,8 @@ master_df <- function(x){
 WFU_KalivasItaly <- u01.importxlsx("(Italy) Master Shipping.xlsx")
 WFU_KalivasItaly[[4]] <- u01.importxlsx("Italy #4 Shipping sheet.xlsx")$Italy
 WFU_KalivasItaly[[5]] <- u01.importxlsx("Italy #5 Shipping sheet.xlsx")$Italy
+WFU_KalivasItaly[[6]] <- u01.importxlsx("Italy #6 Shippingsheet.xlsx")$Italy
+
 WFU_KalivasItaly_test <- uniform.var.names.testingu01(WFU_KalivasItaly)
 
 # create the naive dataset before removing it and clean up naive dataset (pilot 15 rats in cohort 2)
@@ -246,6 +248,7 @@ WFU_KalivasItaly_test <- lapply(WFU_KalivasItaly_test, function(x){
 })
 
 # currently ok, but change to paste in case any scrubs need additional comments
+# remove the extra columns that came with the excel sheet
 WFU_KalivasItaly_test[[1]] <- WFU_KalivasItaly_test[[1]] %>%
   mutate(comment = "Original shipment date 2019-01-29 (held 1 week due to heat)") %>%
   select(-pairnumber)
@@ -253,10 +256,13 @@ WFU_KalivasItaly_test[[3]] <- WFU_KalivasItaly_test[[3]][, -c(16:19)] %>% # XX r
   mutate(comment = "Original shipment 2019-08-05 (held 2 weeks due to heat)") 
 WFU_KalivasItaly_test[[4]] <- WFU_KalivasItaly_test[[4]][, -c(16:19)]
 WFU_KalivasItaly_test[[5]] <- WFU_KalivasItaly_test[[5]][, -c(16:19)]
+WFU_KalivasItaly_test[[6]] <- WFU_KalivasItaly_test[[6]][, -c(16:19)]
+
 
 # # remove non-digit rfid checking id vars
 WFU_KalivasItaly_test <- lapply(WFU_KalivasItaly_test, function(x){
  x <- x %>% 
+   mutate(rfid = as.character(rfid)) %>% 
    dplyr::filter(grepl("^\\d{2,}", rfid))
    return(x)
 }) 
@@ -270,7 +276,7 @@ WFU_KalivasItaly_test_df <- rbindlist(WFU_KalivasItaly_test, id = "cohort", fill
 
 
 ## check no siblings from prev cohort 
-WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "04") %>% 
+WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "06") %>% 
   group_by(sires, dames, cohort, U01) %>% 
   add_count() %>% 
   select(U01, sires, dames, cohort, n) %>% 
@@ -285,15 +291,15 @@ WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(coho
   data.frame() 
 
 ## check no same sex siblings (diff litter)
-WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
+WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check no same sex littermates (same litter)
-WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "04") %>% 
-  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) 
+WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "06") %>% 
+  group_by(rack, shipmentbox) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack, shipmentbox)
+WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "06") %>% group_by(rack, shipmentbox) %>% count(sex) 
 
 # add resolution section XX can I assume that these are ignorable??? 
 
@@ -305,6 +311,8 @@ WFU_Kalivas <- u01.importxlsx("MUSC (Kalivas) Master Shipping.xlsx")
 WFU_Kalivas[[3]] <-  u01.importxlsx("MUSC (Kalivas) #3 Shipping sheet.xlsx")$Kalivas
 WFU_Kalivas[[4]] <- u01.importxlsx("MUSC (Kalivas) Shipping sheet #4.xlsx")$Kalivas
 WFU_Kalivas[[5]] <-  u01.importxlsx("MUSC (Kalivas)#5 Shipping Sheet.xlsx")$Kalivas
+WFU_Kalivas[[6]] <-  u01.importxlsx("MUSC (Kalivas) Shipping sheet #6.xlsx")$Kalivas
+
 WFU_Kalivas_test <- uniform.var.names.testingu01(WFU_Kalivas)
 WFU_Kalivas_test[[1]] <- WFU_Kalivas_test[[1]] %>% 
   select(-pairnumber)
@@ -362,21 +370,21 @@ WFU_Kalivas_test_df %>% mutate(U01 = "Kalivas") %>%
   add_count() %>% 
   rename("siredamepair_in_u01"="n") %>% 
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
-  dplyr::filter(cohort == "04") %>%
+  dplyr::filter(cohort == "06") %>%
   unique() %>% 
   arrange(U01, sires) %>%
   data.frame() 
 
 ## check no same sex siblings (diff litter)
-WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check no same sex littermates (same litter)
-WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "06") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% 
-  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Kalivas_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) 
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "06") %>% 
+  group_by(rack, shipmentbox) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack, shipmentbox)
+WFU_Kalivas_test_df %>% dplyr::filter(cohort == "06") %>% group_by(rack, shipmentbox) %>% count(sex) 
 
 
 ######################
