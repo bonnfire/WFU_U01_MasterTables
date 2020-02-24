@@ -335,6 +335,9 @@ lapply(WFU_Kalivas_test, function(x) summary(x$weanage))
 # # add comment and resolution and check consistency
 WFU_Kalivas_test <- lapply(WFU_Kalivas_test, cbind, comment = NA, resolution = NA)
 
+WFU_Kalivas_test[[1]] <- WFU_Kalivas_test[[1]] %>%
+  mutate(comment = "Rat should be ignored from pilot cohort 1") 
+
 # # checking the number of rfid digits 
 
 lapply(WFU_Kalivas_test, function(x){
