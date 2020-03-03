@@ -18,6 +18,14 @@ flow_cell_original_rip <- flow_cell_original$Sheet1 %>%
 flow_cell_original_rip %>% mutate_at(vars(one_of("Library", "Flow cell lane")), as.factor) %>% summary()
 
 
+
+######################## 
+## FLOW CELL TABLE (RIYAN)
+######################## 
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
+
+flow_cell_original_riyan <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01 (copy for Riyan).xlsx") # 1 table
+
 ######################## 
 ## KHAI EXTRACTION TABLE 
 ######################## 

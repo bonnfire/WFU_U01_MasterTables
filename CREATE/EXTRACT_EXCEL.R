@@ -799,6 +799,10 @@ WFU_OlivierCocaine_test <- lapply(WFU_OlivierCocaine_test, function(x) {
   x$dow[which(x$rfid %in% c("933000120138309", "933000120138318", "933000120138326", "933000120138317"))] <- as.POSIXct("2017-09-17", tz = "UTC")
   return(x)})
 
+## make wean age changes 
+## 03/03/2020 10:34AM "Yes this was a typo. The DOB is correct, I checked the records and the DOB is correct but wean date was 8/14/2019. I fixed this on our end." - Angela Beeson
+WFU_OlivierCocaine_test[[9]] <- WFU_OlivierCocaine_test[[9]] %>% mutate(dow = replace(dow, rfid == "933000320047166", as.POSIXct("2019-08-14", tz = "UTC"))) 
+
 WFU_OlivierCocaine_test <- lapply(WFU_OlivierCocaine_test, transform, weanage = as.numeric(difftime(dow, dob, units = "days")))
 counter = 0
 purrr::walk(WFU_OlivierCocaine_test, function(x){
