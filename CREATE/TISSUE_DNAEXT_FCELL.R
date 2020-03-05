@@ -26,6 +26,26 @@ setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_Shippin
 
 flow_cell_original_riyan <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01 (copy for Riyan).xlsx") # 1 table
 
+for(i in 2:10){
+  dataframe <- flow_cell_original_riyan$Sheet1 %>% group_by(Barcode) %>% slice(1)
+  write.xlsx(dataframe, file="Flowcell_Sample_Sheet.xlsx", sheetName=paste0("sheet", i), row.names=FALSE)
+  dataframe2 <- flow_cell_original_riyan$Sheet1 %>% group_by(Barcode) %>% slice(i)
+  write.xlsx(dataframe2, file="Flowcell_Sample_Sheet.xlsx", sheetName=paste0("sheet", i), row.names=FALSE, append = T)
+}
+dataframe = list()
+for(i in 1:10){
+  dataframe[[i]] <- flow_cell_original_riyan$Sheet1 %>% group_by(Barcode) %>% slice(i)
+}
+xlsx::write.xlsx(dataframe[[1]], file="Flowcell_Sample_Sheet.xlsx", sheetName=paste0("sheet", 1), row.names=FALSE)
+xlsx::write.xlsx(dataframe[[2]], file="Flowcell_Sample_Sheet.xlsx", sheetName=paste0("sheet", 2), append = T, row.names=FALSE)
+
+dataframe
+
+
+write.xlsx(dataframe, file='Flowcell_Sample_Sheet.xlsx')
+
+
+
 ######################## 
 ## KHAI EXTRACTION TABLE 
 ######################## 
