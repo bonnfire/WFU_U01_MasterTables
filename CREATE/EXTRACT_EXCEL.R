@@ -498,6 +498,13 @@ WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% group_by(rack) %>% count(
 ######## MITCHELL ####
 ######################
 WFU_Mitchell <- u01.importxlsx("Mitchell Master Shipping Sheet.xlsx")
+# 3/6 add shipment 4
+WFU_Mitchell[[4]] <- u01.importxlsx("OSHU MITCHELL #5 Shipping Sheet.xlsx")[["MITCHELL"]] 
+names(WFU_Mitchell)[4] <- "#4(02-04-2020)"
+
+## reformat sheets 
+names(WFU_Mitchell[[4]]) <- WFU_Mitchell[[4]][1,]
+WFU_Mitchell[[4]] <- WFU_Mitchell[[4]][-1,]
 WFU_Mitchell_test <- uniform.var.names.testingu01(WFU_Mitchell)
 
 # fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (add comment that the highlighted should be excluded)
@@ -509,8 +516,14 @@ pregnant <- WFU_Mitchell_test[[1]] %>%
 
 WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][ , colSums(is.na(WFU_Mitchell_test[[1]])) == 0] # remove columns with any na's, checked for no na rows 
 
+
+# remove irrelevant columns
+WFU_Mitchell_test[[4]] <- WFU_Mitchell_test[[4]] %>% 
+  select(-c("na", "ageindays"))
+
+## reformat dates
 WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]] %>% 
-  mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d"))
+  mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d")) #  fix date
 
 # # checking id vars
 idcols <- c("labanimalid", "accessid", "rfid")
@@ -521,7 +534,7 @@ WFU_Mitchell_test <- uniform.date.testingu01(WFU_Mitchell_test)
 
 # # add age of shipment and check consistency
 WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, shipmentage = as.numeric(shipmentdate - dob) %>% round)
-lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older
+lapply(WFU_Mitchell_test, function(x) summary(x$shipmentage)) # cohort 3 is slightly older and cohort 4 is getting older
 
 # # add age of wean and check consistency
 WFU_Mitchell_test <- lapply(WFU_Mitchell_test, transform, weanage = as.numeric(dow - dob))
@@ -537,11 +550,10 @@ WFU_Mitchell_test[[1]]$resolution <- ifelse(WFU_Mitchell_test[[1]]$rfid %in% pre
 
 
 # # checking the number of rfid digits 
-
 lapply(WFU_Mitchell_test, function(x){
   x %>% 
     mutate(rfid_digits = nchar(rfid)) %>% 
-    filter(rfid_digits != 15)
+    dplyr::filter(rfid_digits != 15)
 })
 
 # # checking coat color consistency
@@ -555,6 +567,61 @@ names(WFU_Mitchell_test) <- names(WFU_Mitchell)
 
 WFU_Mitchell_test_df <- rbindlist(WFU_Mitchell_test, id = "cohort", fill = T)
 WFU_Mitchell_test_df <- master_df(WFU_Mitchell_test_df)
+
+
+
+
+
+# check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
+# cannot be done for this db bc there are no sex identifiers in the accessid
+
+## check # siblings from prev cohort 
+WFU_Mitchell_test_df %>% mutate(U01 = "Mitchell") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "04") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() 
+
+# if there are cases above, you can pull them out w the following code
+sibs_matches_cocaine <- WFU_Mitchell_test_df %>% mutate(U01 = "Mitchell") %>% 
+  group_by(sires, dames, cohort, U01) %>% 
+  add_count() %>% 
+  select(U01, sires, dames, cohort, n) %>% 
+  ungroup() %>% 
+  rename("siredamepair_in_cohort"="n") %>% 
+  group_by(sires,dames, U01) %>% 
+  add_count() %>% 
+  rename("siredamepair_in_u01"="n") %>% 
+  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+  dplyr::filter(cohort == "04") %>%
+  unique() %>% 
+  arrange(U01, sires) %>%
+  data.frame() %>% 
+  select(sires, dames)
+WFU_Mitchell_test_df %>% dplyr::filter(sires %in% sibs_matches_cocaine$sires, dames %in% sibs_matches_cocaine$dames)
+
+## check # of same sex siblings (diff litter)
+WFU_Mitchell_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, sex)
+
+## check # of same sex littermates (same litter)
+WFU_Mitchell_test_df %>% dplyr::filter(cohort == "04") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+
+## check number of same sex rats in each rack and get number of rat sexes in each rack
+WFU_Mitchell_test_df %>% dplyr::filter(cohort == "04") %>% 
+  group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
+WFU_Mitchell_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table()
+
+
+
 
 ## XX INCOMPLETE  
 # # # validate dates 
