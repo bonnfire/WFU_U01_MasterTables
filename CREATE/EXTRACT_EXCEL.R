@@ -497,14 +497,20 @@ WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% group_by(rack) %>% count(
 ######################
 ######## MITCHELL ####
 ######################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
 WFU_Mitchell <- u01.importxlsx("Mitchell Master Shipping Sheet.xlsx")
-# 3/6 add shipment 4
-WFU_Mitchell[[4]] <- u01.importxlsx("OSHU MITCHELL #5 Shipping Sheet.xlsx")[["MITCHELL"]] 
-names(WFU_Mitchell)[4] <- "#4(02-04-2020)"
+# 3/26 (made mistake about shipment 4 and 5 labelling) add shipment 4
+WFU_Mitchell[[4]] <- u01.importxlsx("Mitchell #4 Shipping sheet.xlsx")[["Mitchell"]] 
+names(WFU_Mitchell)[4] <- "#4(10-08-2019)"
+# no need to reformat sheets, the column names are already characters
+
+# 3/6 add shipment 5
+WFU_Mitchell[[5]] <- u01.importxlsx("OSHU MITCHELL #5 Shipping Sheet.xlsx")[["MITCHELL"]] 
+names(WFU_Mitchell)[5] <- "#4(02-04-2020)"
 
 ## reformat sheets 
-names(WFU_Mitchell[[4]]) <- WFU_Mitchell[[4]][1,]
-WFU_Mitchell[[4]] <- WFU_Mitchell[[4]][-1,]
+names(WFU_Mitchell[[5]]) <- WFU_Mitchell[[5]][1,]
+WFU_Mitchell[[5]] <- WFU_Mitchell[[5]][-1,]
 WFU_Mitchell_test <- uniform.var.names.testingu01(WFU_Mitchell)
 
 # fix first table to account for: no ship date data(DONE), formatting of first row/sires and dames (DONE), highlight (add comment that the highlighted should be excluded)
@@ -518,7 +524,7 @@ WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][ , colSums(is.na(WFU_Mitchell_t
 
 
 # remove irrelevant columns
-WFU_Mitchell_test[[4]] <- WFU_Mitchell_test[[4]] %>% 
+WFU_Mitchell_test[[5]] <- WFU_Mitchell_test[[5]] %>% 
   select(-c("na", "ageindays"))
 
 ## reformat dates
