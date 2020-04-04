@@ -36,13 +36,6 @@ write.xlsx(dataframe, file='Flowcell_Sample_Sheet.xlsx')
 ######################## 
 ## KHAI EXTRACTION TABLE 
 ######################## 
-extractions_khai_df <- lapply(extractions_khai_original, function(x){
-  x <- x %>% mutate_at(vars(contains('Date')), ~lubridate::ymd(.))
-  return(x)
-  }) %>% rbindlist(idcol = "u01", fill = T, use.names = T) 
-names(extractions_khai_df) <- mgsub::mgsub(tolower(names(extractions_khai_df)), 
-                                           c("[#]", "[[:space:]]|[.]|[[:punct:]]$", "[[:punct:]]"), 
-                                           c("num", "", "_"))
 
 extractions_khai_df <- extractions_khai_df %>%
   dplyr::filter(u01 != "Template") %>% 
@@ -74,6 +67,37 @@ extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 
 # extractions_flowcell %>% subset(transponder %in% WFU_OlivierOxycodone_test_df$rfid) %>% dim
 
 #### SENT TO SEQUENCING CORE
+
+
+
+
+############################################################################################################################
+
+
+flowcell_files <- list.files(path = ".", pattern = "^\\d{4}-\\d{2}-\\d{2}-Flowcell Sample-Barcode list.*[^)].xlsx")
+
+flowcell <- lapply(flowcell_files, function(x){
+  x <- u01.importxlsx(x)[[1]] %>% 
+    clean_names() 
+  
+  # x <- lapply(seq_along(x), function(y){
+  #   y <- y %>% mutate_at(vars(contains('Date')), ~lubridate::ymd(.))
+  #   return(y)
+  # }) %>% rbindlist(idcol = "u01", fill = T, use.names = T) 
+  # 
+  # names(x) <- mgsub::mgsub(tolower(names(x)), 
+  #                                            c("[#]", "[[:space:]]|[.]|[[:punct:]]$", "[[:punct:]]"), 
+  #                                            c("num", "", "_"))
+  # 
+  
+  return(x)
+}) %>% rbindlist(idcol = "flowcell_file", fill = T, use.names = T) %>% 
+  mutate(comment = coalesce(comments_8, comments_9)) %>% 
+  select(-c("x7", "comments_8", "comments_9", "flow_cell_lane")) # columns that only contain NA or have been coalesced
+
+
+
+############################################################################################################################
 extractions_flowcell <- extractions_khai_df %>% 
   subset(`sampleid_barcode` %in% flow_cell_original_rip$`Sample ID`) # 288
 
