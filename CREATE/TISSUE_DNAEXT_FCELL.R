@@ -13,9 +13,22 @@ flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Ri
 ######################## 
 ## FLOW CELL TABLE 
 ######################## 
-flow_cell_original_rip <- flow_cell_original$Sheet1 %>% 
-  dplyr::filter(grepl("Riptide", Library))
-flow_cell_original_rip %>% mutate_at(vars(one_of("Library", "Flow cell lane")), as.factor) %>% summary()
+
+# get rid of the Riptide filter to see the UMich data
+flowcell_files <- list.files(path = ".", pattern = "^\\d{4}-\\d{2}-\\d{2}-Flowcell Sample-Barcode list.*[^)].xlsx")
+
+flowcell <- lapply(flowcell_files, function(x){
+  x <- u01.importxlsx(x)[[1]] %>% 
+    clean_names() 
+  return(x)
+})
+names(flowcell) <- flowcell_files 
+flowcell_df <- flowcell %>% rbindlist(idcol = "flowcell_file", fill = T, use.names = T) %>% 
+  mutate(comment = coalesce(comments_8, comments_9)) %>% 
+  select(-c("x7", "comments_8", "comments_9", "flow_cell_lane")) %>%  # columns that only contain NA or have been coalesced
+  dplyr::filter(grepl("Riptide", library)) %>% 
+  mutate(comment = toupper(comment))
+flowcell_df %>% mutate_at(vars(one_of("library")), as.factor) %>% summary()
 
 
 
@@ -68,36 +81,6 @@ extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 
 
 #### SENT TO SEQUENCING CORE
 
-
-
-
-############################################################################################################################
-
-
-flowcell_files <- list.files(path = ".", pattern = "^\\d{4}-\\d{2}-\\d{2}-Flowcell Sample-Barcode list.*[^)].xlsx")
-
-flowcell <- lapply(flowcell_files, function(x){
-  x <- u01.importxlsx(x)[[1]] %>% 
-    clean_names() 
-  
-  # x <- lapply(seq_along(x), function(y){
-  #   y <- y %>% mutate_at(vars(contains('Date')), ~lubridate::ymd(.))
-  #   return(y)
-  # }) %>% rbindlist(idcol = "u01", fill = T, use.names = T) 
-  # 
-  # names(x) <- mgsub::mgsub(tolower(names(x)), 
-  #                                            c("[#]", "[[:space:]]|[.]|[[:punct:]]$", "[[:punct:]]"), 
-  #                                            c("num", "", "_"))
-  # 
-  
-  return(x)
-}) %>% rbindlist(idcol = "flowcell_file", fill = T, use.names = T) %>% 
-  mutate(comment = coalesce(comments_8, comments_9)) %>% 
-  select(-c("x7", "comments_8", "comments_9", "flow_cell_lane")) # columns that only contain NA or have been coalesced
-
-
-
-############################################################################################################################
 extractions_flowcell <- extractions_khai_df %>% 
   subset(`sampleid_barcode` %in% flow_cell_original_rip$`Sample ID`) # 288
 

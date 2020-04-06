@@ -506,7 +506,7 @@ names(WFU_Mitchell)[4] <- "#4(10-08-2019)"
 
 # 3/6 add shipment 5
 WFU_Mitchell[[5]] <- u01.importxlsx("OSHU MITCHELL #5 Shipping Sheet.xlsx")[["MITCHELL"]] 
-names(WFU_Mitchell)[5] <- "#4(02-04-2020)"
+names(WFU_Mitchell)[5] <- "#5(02-04-2020)"
 
 ## reformat sheets 
 names(WFU_Mitchell[[5]]) <- WFU_Mitchell[[5]][1,]
