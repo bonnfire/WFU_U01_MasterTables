@@ -49,10 +49,18 @@ write.xlsx(dataframe, file='Flowcell_Sample_Sheet.xlsx')
 ######################## 
 ## KHAI EXTRACTION TABLE 
 ######################## 
-
-extractions_khai_df <- extractions_khai_df %>%
-  dplyr::filter(u01 != "Template") %>% 
-  mutate(rfid = paste0("933000", sampleid_barcode)) %>% 
+extractions_khai_df <- extractions_khai_original %>% lapply(., function(x){
+  x <- x %>% 
+    mutate_all(as.character)
+  return(x)
+}) %>% 
+  rbindlist(., fill = T, idcol = "sheet_name") %>% 
+  clean_names() %>% 
+  dplyr::filter(sheet_name != "Template") %>% 
+  mutate(rfid = ifelse(grepl("^\\d+", sample_id_barcode)&nchar(sample_id_barcode)==9, 
+                                    paste0("933000", sample_id_barcode), 
+                                    ifelse(grepl("^\\d+", sample_id_barcode)&nchar(sample_id_barcode)==10, 
+                                           paste0("93300", sample_id_barcode), sample_id_barcode))) %>% 
   mutate(u01_rfid_verified = case_when(
     rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "u01_olivier_cocaine",
     # rfid == "933000120117313" ~ "u01_olivier_cocaine",
@@ -60,7 +68,6 @@ extractions_khai_df <- extractions_khai_df %>%
     rfid %in%  WFU_Jhou_test_df$rfid ~ "u01_jhou",
     rfid %in%  WFU_Mitchell_test_df$rfid ~ "u01_mitchell",
     TRUE ~ "NA")) %>% 
-  select(-u01) %>%  
   left_join(., shipments_df[,c("rfid", "cohort", "u01")], by = c("rfid")) %>% 
   mutate(u01 = paste0(u01, "_", cohort)) %>% 
   select(-cohort)
