@@ -58,8 +58,7 @@ jhou_extraction <- khai_spleenextraction_df %>% janitor::clean_names() %>% subse
 ###########################
 ###### OLIVIER ############
 ###########################
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
-olivier_spleen_raw <- read_excel(path = "Olivier Spleens Oxy and Coc 91319.xlsx", col_names = F)
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")olivier_spleen_raw <- read_excel(path = "Olivier Spleens Oxy and Coc 91319.xlsx", col_names = F)
 olivier_spleen_cells_raw <- tidyxl::xlsx_cells(path = "Olivier Spleens Oxy and Coc 91319.xlsx/TissueShipments")
 olivier_spleen_formats_raw <- xlsx_formats(path = "Olivier Spleens Oxy and Coc 91319.xlsx")
 
@@ -237,16 +236,27 @@ saveWorkbook(wb, file = "olivier_spleen_cocaine_oxy_to_genotype.xlsx", overwrite
 ###### MITCHELL ###########
 ###########################
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")
-mitchell_shipment3_spleenceca_original_excel <- u01.importxlsx("Shipping_Content_Lists_Shipment3.xlsx")
-mitchell_spleen_shipments <- mitchell_shipment3_spleenceca_original_excel$`Spleen Shipping Sheet` 
-mitchell_spleen_shipments <- mitchell_spleen_shipments %>% 
-  clean_names() %>% 
-  rename("rfid" = "id", 
-         "dissectionorder" = "dissection_order",
-         "barcodenum" = "barcode_number",
-         "shipmentbox" = "shipping_box") %>% 
-  mutate(shipmentbox = gsub("[^[:digit:].]", "", shipmentbox))
 
+# spleens
+
+mitchell_shipments_files <- list.files(path = ".", pattern = "Shipping_Content_Lists.*")
+mitchell_extractspleen <- function(x){
+  spleen_shipments <- u01.importxlsx(x)$`Spleen Shipping Sheet` %>% 
+    clean_names() %>% 
+    rename("rfid" = "id") %>% 
+    rename_at(vars(matches("^shipping_box_1_container_1$")), function(x) "shipping_box") %>% 
+    rename_at(vars(matches("tissue_collected")), function(x) "tissue") %>% 
+    rename_at(vars(matches("microchip_id")), function(x) "microchip") %>% 
+    mutate(shipping_box = gsub("[^[:digit:].]", "", shipping_box))
+  return(spleen_shipments)
+}
+mitchell_shipments_spleen <- lapply(mitchell_shipments_files, mitchell_extractspleen) 
+names(mitchell_shipments_spleen) <- mitchell_shipments_files
+
+mitchell_shipments_spleen_df <- mitchell_shipments_spleen %>% rbindlist(fill = T, idcol = "sheet")
+
+# since there are two columns, one for barcode_number and another for rfid # do quick check to make sure that these are equal
+mitchell_shipments_spleen_df %>% subset(!is.na(barcode_number)) %>% subset(rfid != paste0("933000", barcode_number)) # since barcode_number is empty for shipment1 doc
 
 
 mitchell_ceca_shipments <- mitchell_shipment3_spleenceca_original_excel$`Ceca Shipping Sheet`
@@ -266,14 +276,17 @@ mitchell_spleenceca_toprocess <- plyr::rbind.fill(mitchell_spleen_shipments, mit
 ###### KALIVAS ############
 ###########################
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")
-kalivas_spleenceca_original_excel <- u01.importxlsx("Kalivas U grant_Spleen collection_Cohort information.xlsx")[-1] %>% rbindlist(idcol = "cohort", fill = T) %>% #get rid of the timeline sheet because it gives us many unwanted columns
+kalivas_spleenceca_original_excel <- u01.importxlsx("Kalivas U grant_Spleen collection_Cohort information.xlsx")[-1] 
+
+kalivas_spleenceca_original_df <- kalivas_spleenceca_original_excel %>% rbindlist(idcol = "cohort", fill = T) %>% #get rid of the timeline sheet because it gives us many unwanted columns
   clean_names() %>% 
   rename("rfid" = "microchip") %>% 
   subset(grepl("Cohort", cohort)) %>% 
   mutate(cohort = str_pad(str_extract(cohort, "\\d+"), 2, "left", "0"), sex = str_extract(toupper(sex), "\\D{1}")) %>% 
   subset(grepl("^\\d+", rfid)) %>% 
-  select(-sex) %>% 
-  left_join(., WFU_Kalivas_test_df[, c("rfid", "sex", "cohort")], by = c("rfid", "cohort")) ## rfid and cohort match in the spleens
+  select(-sex) 
+# %>% 
+  # left_join(., WFU_Kalivas_test_df[, c("rfid", "sex", "cohort")], by = c("rfid", "cohort")) ## rfid and cohort match in the spleens
 
 # show to get the number of dead animals 
 # u01.importxlsx("Kalivas U grant_Spleen collection_Cohort information.xlsx")[-1] %>% rbindlist(idcol = "cohort", fill = T) %>% #get rid of the timeline sheet because it gives us many unwanted columns
@@ -292,9 +305,9 @@ kalivas_spleenceca_original_excel <- u01.importxlsx("Kalivas U grant_Spleen coll
 
 ## for khai's request for all spleen 
 
-jhou_spleen_test %>% subset(spleen == "Yes") %>% select(labanimalid, rfid, notes)
-
-
+jhou_spleen_test %>% subset(spleen == "Yes") %>% select(rfid, notes)
+mitchell_shipments_spleen_df %>% subset(tissue == "Spleen") %>% select(rfid, notes)
+kalivas_spleenceca_original_df %>% select(rfid, notes)
 
 
 
