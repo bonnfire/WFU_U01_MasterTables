@@ -45,6 +45,7 @@ names(jhou_spleen_test) <- mgsub::mgsub(names(jhou_spleen_test),
                                c("", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
   tolower()
 jhou_spleen_test %<>% subset(., select = which(!duplicated(names(.)))) #remove duplicated columns
+
 # fix dupes # using the Summary All table from Jhou project
 jhou_spleen_test <- jhou_spleen_test %>% 
   mutate(rfid = replace(rfid, labanimalid == "U93"&sex == "M", "933000320046784"),
