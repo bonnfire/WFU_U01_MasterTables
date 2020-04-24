@@ -36,7 +36,7 @@ khai_spleenextraction_df <- khai_spleenextraction %>% rbindlist(fill = T)
 ###### JHOU ###############
 ###########################
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster/TissueShipments")
-jhou_spleen_raw <- read_excel(path = "Jhou U01 Spleen and Ceca shipment.xlsx", col_names = F)
+jhou_spleen_raw <- read_excel(path = "Jhou_2019- 06-11 U01 Spleen and Ceca shipment .xlsx", col_names = F)
 jhou_spleen_test <- jhou_spleen_raw
 names(jhou_spleen_test) <- jhou_spleen_raw[1,] %>% as.character()
 jhou_spleen_test <- jhou_spleen_test[-1,]
@@ -290,7 +290,9 @@ kalivas_spleenceca_original_excel <- u01.importxlsx("Kalivas U grant_Spleen coll
 ###########################
 
 
+## for khai's request for all spleen 
 
+jhou_spleen_test %>% subset(spleen == "Yes") %>% select(labanimalid, rfid, notes)
 
 
 
