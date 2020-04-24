@@ -44,9 +44,16 @@ names(jhou_spleen_test) <- mgsub::mgsub(names(jhou_spleen_test),
                                c(" |\\.", "Microchip ID#", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
                                c("", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
   tolower()
+jhou_spleen_test %<>% subset(., select = which(!duplicated(names(.)))) #remove duplicated columns
+# fix dupes # using the Summary All table from Jhou project
+jhou_spleen_test <- jhou_spleen_test %>% 
+  mutate(rfid = replace(rfid, labanimalid == "U93"&sex == "M", "933000320046784"),
+         rfid = replace(rfid, labanimalid == "U94"&sex == "M", "933000320046780"),
+         rfid = replace(rfid, labanimalid == "U97"&sex == "F", "933000320046788"),
+         rfid = replace(rfid, labanimalid == "U98"&sex == "F", "933000320046789"))
+jhou_spleen_test %>% get_dupes(rfid)
 
-
-jhou_extraction <- khai_spleenextraction_df %>% janitor::clean_names() %>% subset(grepl("jhou", dna_plate_code, ignore.case = T))
+# jhou_extraction <- khai_spleenextraction_df %>% janitor::clean_names() %>% subset(grepl("jhou", dna_plate_code, ignore.case = T)) %>%  subset(., select = which(!duplicated(names(.))))
 
 
 
@@ -94,14 +101,19 @@ for(i in 1:9){
 olivier_spleen_list[[10]] <- NULL
 
 # remove na rows and split the cohort into two
-olivier_spleen_list_df <- lapply(olivier_spleen_list, function(df){
-  df <- df[-((grep("^total", df$rfid, ignore.case = T)-1):nrow(df)),]
-  df <- df %>% 
-    mutate(row_num_location_in_box = dplyr::row_number()) %>% 
-    tidyr::separate(col = cohort, into = c("cohort", "experiment"), sep = " (?=[^ ]+$)") %>% 
+olivier_spleen_list_df <- lapply(olivier_spleen_list, function(df) {
+  df <- df[-((grep("^total", df$rfid, ignore.case = T) - 1):nrow(df)), ]
+  df <- df %>%
+    mutate(row_num_location_in_box = dplyr::row_number()) %>%
+    tidyr::separate(
+      col = cohort,
+      into = c("cohort", "experiment"),
+      sep = " (?=[^ ]+$)"
+    ) %>%
     mutate(sex = substring(labanimalid, 1, 1))
-return(df)
-}) %>% rbindlist()
+  return(df)
+}) %>% rbindlist() %>%
+  subset(!is.na(rfid))
 
 # QC: 
 # number of counts as the raw files: all numbers match cohorts 1:8 for cocaine, no cohort 6, and only 3 and 4 for oxy
@@ -305,14 +317,16 @@ kalivas_spleenceca_original_df <- kalivas_spleenceca_original_excel %>% rbindlis
 
 ## for khai's request for all spleen 
 
-jhou_spleen_test %>% subset(spleen == "Yes") %>% select(rfid, notes)
-mitchell_shipments_spleen_df %>% subset(tissue == "Spleen") %>% select(rfid, notes)
-kalivas_spleenceca_original_df %>% select(rfid, notes)
-
-
-
-
-
+spleen_extraction_df <- list(
+  Jhou = jhou_spleen_test %>% subset(spleen == "Yes") %>% select(rfid, notes),
+  Mitchell = mitchell_shipments_spleen_df %>% subset(tissue == "Spleen") %>% select(rfid, notes),
+  Kalivas = kalivas_spleenceca_original_df %>% select(rfid, notes),
+  Olivier = olivier_spleen_list_df %>% select(rfid)
+) %>% rbindlist(fill = T, idcol = "u01")
+# quick qc before creating into excel sheet to share with khai
+spleen_extraction_df %>% subset(nchar(rfid) != 15|!grepl("^\\d", rfid)) 
+spleen_extraction_df %>% get_dupes(rfid) 
+jhou_spleen_test %>% subset(spleen == "Yes") %>% get_dupes(rfid) 
 
 
 
