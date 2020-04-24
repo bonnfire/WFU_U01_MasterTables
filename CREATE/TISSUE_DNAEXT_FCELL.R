@@ -4,7 +4,7 @@
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
 
 
-extractions_khai_original <- u01.importxlsx("U01 spleen extraction database.xlsx") # 9 tables
+extractions_khai_original <- u01.importxlsx("U01 spleen extraction database.xlsx") # 16 tables
 extractions_hannah_original <- u01.importxlsx("High_Throughput_DNA_&_spleen_info.xlsx") # 33 tables 
 flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01.xlsx") # 1 table
 
@@ -14,7 +14,8 @@ flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Ri
 ## FLOW CELL TABLE 
 ######################## 
 
-# get rid of the Riptide filter to see the UMich data
+# get rid of the Riptide filter to see the UMich da ta
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
 flowcell_files <- list.files(path = ".", pattern = "^\\d{4}-\\d{2}-\\d{2}-Flowcell Sample-Barcode list.*[^)].xlsx")
 
 flowcell <- lapply(flowcell_files, function(x){
@@ -29,6 +30,14 @@ flowcell_df <- flowcell %>% rbindlist(idcol = "flowcell_file", fill = T, use.nam
   dplyr::filter(grepl("Riptide", library)) %>% 
   mutate(comment = toupper(comment))
 flowcell_df %>% mutate_at(vars(one_of("library")), as.factor) %>% summary()
+flowcell_df %>% subset(!is.na(sample_id_demul)) %>% get_dupes(sample_id_demul)
+
+## get_dupes()
+## group by library
+
+
+
+  
 
 
 
@@ -49,28 +58,37 @@ write.xlsx(dataframe, file='Flowcell_Sample_Sheet.xlsx')
 ######################## 
 ## KHAI EXTRACTION TABLE 
 ######################## 
-extractions_khai_df <- extractions_khai_original %>% lapply(., function(x){
-  x <- x %>% 
-    mutate_all(as.character)
-  return(x)
-}) %>% 
-  rbindlist(., fill = T, idcol = "sheet_name") %>% 
-  clean_names() %>% 
-  dplyr::filter(sheet_name != "Template") %>% 
-  mutate(rfid = ifelse(grepl("^\\d+", sample_id_barcode)&nchar(sample_id_barcode)==9, 
-                                    paste0("933000", sample_id_barcode), 
-                                    ifelse(grepl("^\\d+", sample_id_barcode)&nchar(sample_id_barcode)==10, 
-                                           paste0("93300", sample_id_barcode), sample_id_barcode))) %>% 
-  mutate(u01_rfid_verified = case_when(
-    rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "u01_olivier_cocaine",
-    # rfid == "933000120117313" ~ "u01_olivier_cocaine",
-    rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "u01_olivier_oxycodone",
-    rfid %in%  WFU_Jhou_test_df$rfid ~ "u01_jhou",
-    rfid %in%  WFU_Mitchell_test_df$rfid ~ "u01_mitchell",
-    TRUE ~ "NA")) %>% 
-  left_join(., shipments_df[,c("rfid", "cohort", "u01")], by = c("rfid")) %>% 
-  mutate(u01 = paste0(u01, "_", cohort)) %>% 
-  select(-cohort)
+extractions_khai_df <-
+  extractions_khai_original %>% lapply(., function(x) {
+    x <- x %>%
+      mutate_all(as.character)
+    return(x)
+  }) %>%
+  rbindlist(., fill = T, idcol = "sheet_name") %>%
+  clean_names() %>%
+  dplyr::filter(sheet_name != "Template") %>%
+  mutate(rfid = ifelse(
+    grepl("^\\d+", sample_id_barcode) & nchar(sample_id_barcode) == 9,
+    paste0("933000", sample_id_barcode),
+    ifelse(
+      grepl("^\\d+", sample_id_barcode) & nchar(sample_id_barcode) == 10,
+      paste0("93300", sample_id_barcode),
+      sample_id_barcode
+    )
+  )) %>%
+  mutate(
+    u01_rfid_verified = case_when(
+      rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "yes",
+      # rfid == "933000120117313" ~ "u01_olivier_cocaine",
+      rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "yes",
+      rfid %in%  WFU_Jhou_test_df$rfid ~ "yes",
+      rfid %in%  WFU_Mitchell_test_df$rfid ~ "yes",
+      TRUE ~ "NA"
+    )
+  ) %>%
+  left_join(., shipments_df[, c("rfid", "cohort", "u01")], by = c("rfid")) %>%
+  mutate(u01 = paste0(u01, "_", cohort)) %>%
+  select(-one_of("cohort", "x18"))
 # origin is not cohort
 # WFU_OlivierCocaine_test_df %>% subset(rfid %in% c("933000320047386", "933000320046848"))
 
@@ -85,6 +103,25 @@ extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 
 # extractions_flowcell %>% dim
 # extractions_flowcell %>% subset(transponder %in% WFU_OlivierCocaine_test_df$rfid) %>% dim
 # extractions_flowcell %>% subset(transponder %in% WFU_OlivierOxycodone_test_df$rfid) %>% dim
+
+
+con <- dbConnect(dbDriver("PostgreSQL"), dbname="U01",user="postgres",password="postgres", )
+dbWriteTable(con, c("public","extractions_ucsd"), value = extractions_khai_df, row.names = FALSE)
+
+# gsub("\\\\", "", paste0(colnames(extractions_khai_df), collapse='","')) %>% cat to get an c+p version of the colnames 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #### SENT TO SEQUENCING CORE
 
