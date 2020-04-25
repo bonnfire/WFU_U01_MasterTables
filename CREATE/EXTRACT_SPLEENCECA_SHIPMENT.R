@@ -327,7 +327,8 @@ spleen_extraction_df <- list(
 # quick qc before creating into excel sheet to share with khai
 spleen_extraction_df %>% subset(nchar(rfid) != 15|!grepl("^\\d", rfid)) 
 spleen_extraction_df %>% get_dupes(rfid) 
-jhou_spleen_test %>% subset(spleen == "Yes") %>% get_dupes(rfid) 
 
-
+# create the excel sheet as requested
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_wfu_u01_shippingmaster")
+write.xlsx(spleen_extraction_df, "spleen_extraction_u01_04242020.xlsx")
 
