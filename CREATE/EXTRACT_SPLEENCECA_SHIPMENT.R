@@ -69,6 +69,20 @@ jhou_spleen_test2 %<>% subset(., select = which(!duplicated(names(.)))) %<>% sub
   
 
 
+## XX WORK ON MERGING THE THREE
+jhou_spleen_raw_3 <- read_excel(path = "05-05-2020 Spleen shipment .xlsx", col_names = F)
+jhou_spleen_test3 <- jhou_spleen_raw_3
+names(jhou_spleen_test3) <- jhou_spleen_raw_3[1,] %>% as.character()
+jhou_spleen_test3 <- jhou_spleen_test3[-1,]
+names(jhou_spleen_test3) <- mgsub::mgsub(names(jhou_spleen_test3),
+                                         c(" |\\.|#", "Microchip #", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                                         c("", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
+  tolower()
+jhou_spleen_test3 %<>% rename("rfid" = "last4ofmicrochip") %<>% subset(., select = which(!duplicated(names(.)))) %<>% subset(grepl("\\d{15}", rfid))
+jhou_spleen_test3 %>% left_join(., WFU_Jhou_test_df[, c("cohort", "rfid")], by = "rfid") %>% select(cohort) %>% table()
+
+
+## XX 
 ###########################
 ###### OLIVIER ############
 ###########################
