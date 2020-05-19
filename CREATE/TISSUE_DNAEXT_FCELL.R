@@ -1,10 +1,10 @@
 ### PROCESSING PALMER LAB DATASETS 
 # EXTRACTION AND FLOW CELL TABLES FROM HANNAH AND KHAI
 
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues/Original")
 
 
-extractions_khai_original <- u01.importxlsx("U01 spleen extraction database.xlsx") # 16 tables
+extractions_khai_original <- u01.importxlsx("U01 spleen extraction database.xlsx") # 23 tables
 extractions_hannah_original <- u01.importxlsx("High_Throughput_DNA_&_spleen_info.xlsx") # 33 tables 
 flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01.xlsx") # 1 table
 
@@ -15,7 +15,7 @@ flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Ri
 ######################## 
 
 # get rid of the Riptide filter to see the UMich da ta
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues/Original")
 flowcell_files <- list.files(path = ".", pattern = "^\\d{4}-\\d{2}-\\d{2}-Flowcell Sample-Barcode list.*[^)].xlsx")
 
 flowcell <- lapply(flowcell_files, function(x){
@@ -44,7 +44,7 @@ flowcell_df %>% subset(!is.na(sample_id_demul)) %>% get_dupes(sample_id_demul)
 ######################## 
 ## FLOW CELL TABLE (RIYAN)
 ######################## 
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues")
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues/Processed")
 
 flow_cell_original_riyan <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01 (copy for Riyan).xlsx") # 1 table
 dataframe = list()
@@ -83,6 +83,9 @@ extractions_khai_df <-
       rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "yes",
       rfid %in%  WFU_Jhou_test_df$rfid ~ "yes",
       rfid %in%  WFU_Mitchell_test_df$rfid ~ "yes",
+      rfid %in%  WFU_Kalivas_test_df$rfid ~ "yes",
+      rfid %in%  WFU_KalivasItaly_test_df$rfid ~ "yes",
+      
       TRUE ~ "NA"
     )
   ) %>%

@@ -56,6 +56,17 @@ jhou_spleen_test %>% get_dupes(rfid)
 
 # jhou_extraction <- khai_spleenextraction_df %>% janitor::clean_names() %>% subset(grepl("jhou", dna_plate_code, ignore.case = T)) %>%  subset(., select = which(!duplicated(names(.))))
 
+## XX WORK ON MERGING THE TWO
+jhou_spleen_raw_2 <- read_excel(path = "05-12-2020 Spleen Shipment.xlsx", col_names = F)
+jhou_spleen_test2 <- jhou_spleen_raw_2
+names(jhou_spleen_test2) <- jhou_spleen_raw_2[1,] %>% as.character()
+jhou_spleen_test2 <- jhou_spleen_test2[-1,]
+names(jhou_spleen_test2) <- mgsub::mgsub(names(jhou_spleen_test2),
+                                        c(" |\\.|#", "Microchip #", "Date of Birth|Birth Date", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                                        c("", "RFID", "DOB", "DOW","LabAnimal", "Shipment", "Dames")) %>% 
+  tolower()
+jhou_spleen_test2 %<>% subset(., select = which(!duplicated(names(.)))) %<>% subset(grepl("\\d{15}", rfid))
+  
 
 
 ###########################

@@ -390,6 +390,15 @@ WFU_Kalivas_test_df %>% dplyr::filter(cohort == "06") %>%
 WFU_Kalivas_test_df %>% dplyr::filter(cohort == "06") %>% group_by(rack, shipmentbox) %>% count(sex) 
 
 
+## based on the behavioral testing centers sheets, there are some changes that need to be made in the wfu database 
+# Kalivas_metadata %>% subset(!is.na(comments_behavunit)&!grepl("died",comments_behavunit)) %>% distinct(rfid, comments_behavunit, coatcolor)
+WFU_Kalivas_test_df <- WFU_Kalivas_test_df %>% 
+  mutate(coatcolor = replace(coatcolor, rfid == "933000320047052", ))
+
+
+## for cleaning up environment for database (just keep the df necessary for left joins)
+# rm(list = grep("^WFU_.*(?<!_df)$", ls(), perl=TRUE, value=TRUE) )
+
 ######################
 ######## JHOU ########
 ######################
@@ -1180,5 +1189,5 @@ WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07", is.na(comment)) %
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
 WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
+WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
 
