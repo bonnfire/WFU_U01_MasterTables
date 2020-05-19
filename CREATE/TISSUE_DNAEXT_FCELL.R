@@ -97,6 +97,8 @@ extractions_khai_df <-
 
 extractions_khai_df$u01_rfid_verified %>% table()
 extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
+extractions_khai_df %>% mutate(u01_group = gsub("_\\d+", "", u01), u01_cohort = parse_number(u01)) %>% select(u01_group, u01_cohort) %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
+
 
 # extractions_khai_df %>% mutate_at(vars(one_of("u01", "comments")), as.factor) %>% 
 #   summary()
