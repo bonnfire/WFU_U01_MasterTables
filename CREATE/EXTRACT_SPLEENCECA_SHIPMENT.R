@@ -15,23 +15,6 @@ library(stringr)
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/20190829_WFU_U01_ShippingMaster")
 
 
-### extract khai's data
-# devtools::install_github("Displayr/flipAPI")
-library(flipAPI)
-khai_spleenextraction <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0")
-path <- "https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0"
-
-path %>% 
-  map(flipAPI::DownloadXLSX)
-
-khai_spleenextraction <- list()
-for(i in 1:8){
-  khai_spleenextraction[[i]] <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0", sheet = i)  
-}
-khai_spleenextraction_df <- khai_spleenextraction %>% rbindlist(fill = T)
-
-
-
 ###########################
 ###### JHOU ###############
 ###########################
@@ -336,12 +319,12 @@ kalivas_spleenceca_original_df <- kalivas_spleenceca_original_excel %>% rbindlis
 #   left_join(., WFU_Kalivas_test_df[, c("rfid", "sex", "cohort")], by = c("rfid")) %>% select(cohort) %>% table()
 
 
-###########################
-###### ALL EXTRACTION #####
-###########################
+#################################################
+###### ALL SPLEENS DELIVERED FOR EXTRACTION #####
+#################################################
 
 
-## for khai's request for all spleen 
+## for khai's request for a spreadsheet with all delivered spleen 
 
 spleen_extraction_df <- list(
   Jhou = jhou_spleen_test %>% subset(spleen == "Yes") %>% select(rfid, notes),

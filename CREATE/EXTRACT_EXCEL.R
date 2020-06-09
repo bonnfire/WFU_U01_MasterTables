@@ -919,7 +919,10 @@ names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(
 WFU_OlivierCocaine_test_df <- rbindlist(WFU_OlivierCocaine_test, id = "cohort", fill = T)
 WFU_OlivierCocaine_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
                              cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)),
-                             rfid = replace(rfid, rfid == "93300120117313", "933000120117313"))
+                             rfid = replace(rfid, rfid == "93300120117313", "933000120117313"),
+                             rfid = replace(rfid, rfid == "93300120117309", "933000120117309"),
+                             rfid = replace(rfid, rfid == "93300120117330", "933000120117330"),
+                             rfid = replace(rfid, rfid == "93300120117315", "933000120117315")) #replacement of cohort 1 rfid's bc of the confirmation from olivier labs' sheets
 
 # append naive/scrub comment to dataframe
 # # add comment of scrubs for matching rfid 
@@ -928,6 +931,9 @@ WFU_OlivierCocaine_test_df <- WFU_OlivierCocaine_test_df %>%
   dplyr::filter(grepl("^(?=\\d)", rfid, perl = T))
 # to check if all naive cases were identified: all 15 in each cohort (5-9) were found
 # WFU_OlivierCocaine_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
+
+
+
 
 # check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
 WFU_OlivierCocaine_test_df %>%
