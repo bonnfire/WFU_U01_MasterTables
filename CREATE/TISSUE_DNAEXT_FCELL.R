@@ -4,11 +4,30 @@
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues/Original")
 
 
-extractions_khai_original <- u01.importxlsx("U01 spleen extraction database.xlsx") # 23 tables
+# extractions_khai_original <- u01.importxlsx("U01 spleen extraction database.xlsx") # 23 tables
+# lapply(extractions_khai_original, function(x){x %>% mutate_all(as.character)}) %>% rbindlist(fill = T) %>% dim
+# this is from the original code, where you are saving the excel sheets and reading in these different versions of sheets, and the lapply function is used to check if the flipapi code is working
+
 extractions_hannah_original <- u01.importxlsx("High_Throughput_DNA_&_spleen_info.xlsx") # 33 tables 
 flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01.xlsx") # 1 table
 
 ## are there cocaine spleens submitted in the flow cell submitted to the sequencing core? 
+
+
+######################## 
+## KHAI EXTRACTION TABLE 
+######################## 
+
+### extract khai's data
+# devtools::install_github("Displayr/flipAPI")
+library(flipAPI)
+
+khai_spleenextraction <- list()
+for(i in 1:24){
+  khai_spleenextraction[[i]] <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0", sheet = i)  
+}
+khai_spleenextraction_df <- khai_spleenextraction %>% rbindlist(fill = T)
+
 
 ######################## 
 ## FLOW CELL TABLE 
@@ -129,6 +148,10 @@ dbWriteTable(con, c("public","extractions_ucsd"), value = extractions_khai_df, r
 
 
 #### SENT TO SEQUENCING CORE
+## 06/09/2020
+## XX fix project names before uploading the sheets in the database
+
+
 
 extractions_flowcell <- extractions_khai_df %>% 
   subset(`sampleid_barcode` %in% flow_cell_original_rip$`Sample ID`) # 288
