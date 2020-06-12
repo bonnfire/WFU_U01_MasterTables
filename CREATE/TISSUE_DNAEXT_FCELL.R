@@ -70,20 +70,6 @@ library_riptide <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/hq4g4fw4irub
   
 
 
-extractions_khai_df$u01_rfid_verified %>% table()
-extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
-extractions_khai_df %>% mutate(u01_group = gsub("_\\d+", "", u01), u01_cohort = parse_number(u01)) %>% select(u01_group, u01_cohort) %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
-
-
-# extractions_khai_df %>% mutate_at(vars(one_of("u01", "comments")), as.factor) %>% 
-#   summary()
-# extractions_khai_df %>% dplyr::filter(u01 != "Template") %>% dplyr::filter(u01!=dnaplatecode) # note that olivier c06 shares with mitchell c01
-
-## INVESTIGATE THIS
-# extractions_flowcell %>% dim
-# extractions_flowcell %>% subset(transponder %in% WFU_OlivierCocaine_test_df$rfid) %>% dim
-# extractions_flowcell %>% subset(transponder %in% WFU_OlivierOxycodone_test_df$rfid) %>% dim
-
 
 ######################## 
 ## FLOW CELL TABLE 
@@ -116,9 +102,7 @@ flowcell_df %>% subset(!is.na(sample_id_demul)) %>% get_dupes(sample_id_demul)
 
 
 
-######################## 
-## FLOW CELL TABLE (RIYAN)
-######################## 
+## create the sample sheet for Riyan
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues/Processed")
 
 flow_cell_original_riyan <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01 (copy for Riyan).xlsx") # 1 table
@@ -178,93 +162,6 @@ agrep("933000120117342", extractions_flowcell$transponder, value = T)
 "933000120138561"
 
 
-
-## GRAPHS 
-
-extractions_flowcell %>% 
-  ggplot(aes(x = `nanodropng_ul`)) + 
-  geom_histogram() + 
-  facet_grid(~ u01) +
-  labs(title = paste0("Nanodrop(ng/ul) values by U01")) +
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-extractions_flowcell %>% 
-  ggplot(aes(x = `u01`, y = `nanodropng_ul`)) + 
-  geom_boxplot() + 
-  labs(title = paste0("Nanodrop(ng/ul) values by U01")) +
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-
-extractions_flowcell %>% dplyr::filter(u01 == "Olivier_Co_03") %>% 
-  ggplot(aes(x = `u01`, y = `nanodropng_ul`, fill = userid)) + 
-  geom_boxplot() + 
-  labs(title = paste0("Nanodrop(ng/ul) values by U01")) +
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-extractions_flowcell %>% 
-  ggplot(aes(x = `260_280`, color = u01)) + 
-  geom_density() + 
-  # facet_grid(~ u01) +
-  labs(title = paste0("260_280 values by U01")) +
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"),
-        legend.text=element_text(size=20))
-
-extractions_flowcell %>% 
-  ggplot(aes(x = `260_280`, color = u01)) + 
-  geom_density() + 
-  facet_grid(~ u01) +
-  labs(title = paste0("260_280 values by U01")) +
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-extractions_flowcell %>% 
-  ggplot(aes(x = `u01`, y = `260_280`)) + 
-  geom_boxplot() + 
-  labs(title = paste0("260_280 values by U01")) + 
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-extractions_flowcell %>% dplyr::filter(u01 == "Olivier_Co_03") %>% 
-  ggplot(aes(x = `u01`, y = `260_280`, fill = userid)) + 
-  geom_boxplot() + 
-  labs(title = paste0("260_280 values by U01")) + 
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-  
-extractions_flowcell %>% 
-    ggplot(aes(x = `260_230`, color = u01)) + 
-    geom_density() + 
-    # facet_grid(~ u01) +
-    labs(title = paste0("260_230 values by U01")) + 
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"),
-        legend.text=element_text(size=20))
-
-
-extractions_flowcell %>% 
-  ggplot(aes(x = `u01`, y = `260_230`)) + 
-  geom_boxplot() + 
-  labs(title = paste0("260_230 values by U01"))  + 
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-extractions_flowcell %>% dplyr::filter(u01 == "Olivier_Co_03") %>% 
-  ggplot(aes(x = `u01`, y = `260_230`, fill = userid)) + 
-  geom_boxplot() + 
-  labs(title = paste0("260_280 values by U01")) + 
-  theme(axis.text=element_text(size=20),
-        axis.title=element_text(size=25,face="bold"))
-
-
-# extractions_flowcell %>% 
-#   ggplot(aes(x = u01, y = `260_230`, color = comments)) + 
-#   geom_boxplot() + 
-#   facet_grid(~ userid) +
-#   labs(title = paste0("260_230 values by U01 and tech"))
 
 
 
@@ -333,4 +230,20 @@ extractions_hannah_original <- u01.importxlsx("High_Throughput_DNA_&_spleen_info
 flow_cell_original <- u01.importxlsx("2020-01-16-Flowcell Sample-Barcode list-Riptide-UMich2-Riptide03_NovaSeq01.xlsx") # 1 table
 
 ## are there cocaine spleens submitted in the flow cell submitted to the sequencing core? 
+
+
+extractions_khai_df$u01_rfid_verified %>% table()
+extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
+extractions_khai_df %>% mutate(u01_group = gsub("_\\d+", "", u01), u01_cohort = parse_number(u01)) %>% select(u01_group, u01_cohort) %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
+
+
+# extractions_khai_df %>% mutate_at(vars(one_of("u01", "comments")), as.factor) %>% 
+#   summary()
+# extractions_khai_df %>% dplyr::filter(u01 != "Template") %>% dplyr::filter(u01!=dnaplatecode) # note that olivier c06 shares with mitchell c01
+
+## INVESTIGATE THIS
+# extractions_flowcell %>% dim
+# extractions_flowcell %>% subset(transponder %in% WFU_OlivierCocaine_test_df$rfid) %>% dim
+# extractions_flowcell %>% subset(transponder %in% WFU_OlivierOxycodone_test_df$rfid) %>% dim
+
 
