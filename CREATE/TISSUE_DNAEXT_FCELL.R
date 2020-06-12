@@ -39,64 +39,36 @@ khai_spleenextraction_df <- khai_spleenextraction %>%
       sample_id_barcode)
       ) 
   )) %>% # create the rfid column from the sample_id_barcode to make them uniform and comparable to transponder id (rfid) in wfu
-  mutate(
-    u01_rfid_verified = case_when(
-      rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "yes",
-      # rfid == "933000120117313" ~ "u01_olivier_cocaine",
-      rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "yes",
-      rfid %in%  WFU_Jhou_test_df$rfid ~ "yes",
-      rfid %in%  WFU_Mitchell_test_df$rfid ~ "yes",
-      rfid %in%  WFU_Kalivas_test_df$rfid ~ "yes",
-      rfid %in%  WFU_KalivasItaly_test_df$rfid ~ "yes",
-      
-      TRUE ~ "NA"
-    )
-  ) %>%
+  # mutate(
+  #   u01_rfid_verified = case_when(
+  #     rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "yes",
+  #     # rfid == "933000120117313" ~ "u01_olivier_cocaine",
+  #     rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "yes",
+  #     rfid %in%  WFU_Jhou_test_df$rfid ~ "yes",
+  #     rfid %in%  WFU_Mitchell_test_df$rfid ~ "yes",
+  #     rfid %in%  WFU_Kalivas_test_df$rfid ~ "yes",
+  #     rfid %in%  WFU_KalivasItaly_test_df$rfid ~ "yes",
+  #     
+  #     TRUE ~ "NA"
+  #   )
+  # ) %>%
   left_join(., shipments_df[, c("rfid", "cohort", "u01")], by = c("rfid")) %>%
   mutate(u01 = paste0(u01, "_", cohort)) %>%
   select(-one_of("cohort"))
 
 
+
+################################ 
+## LIBRARY RIPTIDE NAME LIST 
+################################
+
+library_riptide <- flipAPI::DownloadXLSX("https://www.dropbox.com/s/hq4g4fw4irubhes/Library%20Riptide%20Name%20List.xlsx?dl=0") %>% 
+  clean_names() %>% 
+  mutate_all(as.character) %>% 
+  mutate_at(vars(matches("date")), as.POSIXct) 
+
   
-  ######################## 
-## KHAI EXTRACTION TABLE 
-######################## 
-extractions_khai_df <-
-  extractions_khai_original %>% lapply(., function(x) {
-    x <- x %>%
-      mutate_all(as.character)
-    return(x)
-  }) %>%
-  rbindlist(., fill = T, idcol = "sheet_name") %>%
-  clean_names() %>%
-  dplyr::filter(sheet_name != "Template") %>%
-  mutate(rfid = ifelse(
-    grepl("^\\d+", sample_id_barcode) & nchar(sample_id_barcode) == 9,
-    paste0("933000", sample_id_barcode),
-    ifelse(
-      grepl("^\\d+", sample_id_barcode) & nchar(sample_id_barcode) == 10,
-      paste0("93300", sample_id_barcode),
-      sample_id_barcode
-    )
-  )) %>%
-  mutate(
-    u01_rfid_verified = case_when(
-      rfid %in%  WFU_OlivierCocaine_test_df$rfid ~ "yes",
-      # rfid == "933000120117313" ~ "u01_olivier_cocaine",
-      rfid %in%  WFU_OlivierOxycodone_test_df$rfid ~ "yes",
-      rfid %in%  WFU_Jhou_test_df$rfid ~ "yes",
-      rfid %in%  WFU_Mitchell_test_df$rfid ~ "yes",
-      rfid %in%  WFU_Kalivas_test_df$rfid ~ "yes",
-      rfid %in%  WFU_KalivasItaly_test_df$rfid ~ "yes",
-      
-      TRUE ~ "NA"
-    )
-  ) %>%
-  left_join(., shipments_df[, c("rfid", "cohort", "u01")], by = c("rfid")) %>%
-  mutate(u01 = paste0(u01, "_", cohort)) %>%
-  select(-one_of("cohort", "x18"))
-# origin is not cohort
-# WFU_OlivierCocaine_test_df %>% subset(rfid %in% c("933000320047386", "933000320046848"))
+
 
 extractions_khai_df$u01_rfid_verified %>% table()
 extractions_khai_df$u01 %>% table() ## fix the origin cells? also cocaine_oxy 2 cases?
