@@ -21,6 +21,9 @@ u01.importxlsx <- function(xlname){
   return(df)
 } 
 
+df <- lapply(excel_sheets(path = "https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0"), 
+       read_excel, path = "https://www.dropbox.com/s/ps8hxgleh1lvo55/U01%20spleen%20extraction%20database.xlsx?dl=0")
+
 uniform.var.names.testingu01 <- function(df){
   lapply(seq_along(df), function(i) {
     if(grepl("Parent", names(df[[i]])) %>% any()){
