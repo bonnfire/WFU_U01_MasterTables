@@ -35,8 +35,6 @@ sequencing_run_log_IGM_df$project %>% unique
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Tissues/Processed")
 sequencing_run_log_IGM_df %>% write.xlsx(file = "sequencing_run_log_IGM_df.xlsx")
 
-
-## XX need to fix the project name before uploading
-## columns include date samples submitted, date sequenced, date returned, run ID#, type of run, type of lib prep, #of pools
-
 ## upload into the dropbox 
+
+
