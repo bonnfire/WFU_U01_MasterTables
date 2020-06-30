@@ -419,10 +419,19 @@ names(WFU_Jhou)[13] <- "#13(11-19-2019)"
 
 ## 1/9 add cohort
 WFU_Jhou[[14]] <- u01.importxlsx("Jhou #14 Shipping Sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+names(WFU_Jhou)[14] <- "#14(01-14-2020)" 
+
+## 6/30 add cohort
+WFU_Jhou[[15]] <- u01.importxlsx("Jhou #15 shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+
+# # make within-df variable names consistent and fix sires/dames column name issue
+names(WFU_Jhou)[15] <- "#15(06-22-2020)" 
+
 
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
 WFU_Jhou_test[[14]]$rfid = as.character(WFU_Jhou_test[[14]]$rfid)
+
 
 # experiment/table specific: remove empty columns 16-18
 WFU_Jhou_test[[1]] <- WFU_Jhou_test[[1]][, -c(16:18), drop = F] # drop = F retains data type
@@ -471,7 +480,8 @@ WFU_Jhou_test <- uniform.coatcolors(WFU_Jhou_test)
 names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
-WFU_Jhou_test_df %<>% mutate(cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
+WFU_Jhou_test_df %<>% mutate(cohort = gsub("#(\\d+)[(].*", "\\1", cohort),
+  cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
 
 # check number of rat siblings in each cohort # cohort 13 has all two siblings
 # and 
@@ -488,21 +498,21 @@ WFU_Jhou_test_df %>% mutate(U01 = "Jhou") %>%
   add_count() %>% 
   rename("siredamepair_in_u01"="n") %>% 
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
-  dplyr::filter(cohort == "14") %>%
+  dplyr::filter(cohort == "15") %>%
   unique() %>% 
   arrange(U01, sires) %>%
   data.frame() 
 
 ## check no same sex siblings (diff litter)
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% janitor::get_dupes(sires, dames, sex)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check no same sex littermates (same litter)
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% 
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "14") %>% group_by(rack) %>% count(sex) 
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% group_by(rack) %>% count(sex) 
 
 
 
@@ -788,12 +798,17 @@ WFU_OlivierCocaine[[4]]$`Animal #` <- as.character(WFU_OlivierCocaine[[4]]$`Anim
 # 12/10 add shipment 10
 WFU_OlivierCocaine[10:11] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(3, 1)] # scrubs last
 
-#1/3 add shipment 11 
+# 1/3 add shipment 11 
 WFU_OlivierCocaine[12:13] <- u01.importxlsx("UCSD #11 shipping sheet.xlsx")[c(2, 1)] # scrubs last
 
+# 06/30 add shipment 12
+WFU_OlivierCocaine[14] <- u01.importxlsx("UCSD #12 shipping sheet.xlsx")[1] # scrubs are included in this table
+
+
+## XX pick up from here 06/30/2020
 
 # set column names without "Cocaine and date" header
-WFU_OlivierCocaine[5:13] <- lapply(WFU_OlivierCocaine[5:13], 
+WFU_OlivierCocaine[5:14] <- lapply(WFU_OlivierCocaine[5:14], 
                               function(x){
                                 names(x) <- x[1,] %>% as.character()
                                 x <- x[-1, ]
@@ -1002,6 +1017,10 @@ WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping 
 WFU_OlivierOxycodone[6:7] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(2, 1)] # scrubs last
 #1/3 add shipment 17
 WFU_OlivierOxycodone[8:9] <- u01.importxlsx("UCSD #11 shipping sheet.xlsx")[c(3, 1)] # scrubs last
+# XX 06/30 add shipment ???? 
+WFU_OlivierOxycodone[10] <- u01.importxlsx("UCSD #12 shipping sheet.xlsx")[2] # scrubs last
+
+
 
 WFU_OlivierOxycodone[c(1:5, 7:9)] <- lapply(WFU_OlivierOxycodone[c(1:5, 7:9)], function(x){
   names(x) <- x[1, ] %>% as.character
@@ -1012,6 +1031,8 @@ WFU_OlivierOxycodone[c(1:5, 7:9)] <- lapply(WFU_OlivierOxycodone[c(1:5, 7:9)], f
 WFU_OlivierOxycodone[[1]] <- WFU_OlivierOxycodone[[1]][, -c(16:18), drop = F]
 WFU_OlivierOxycodone[[8]] <- WFU_OlivierOxycodone[[8]][, -c(16:17), drop = F]
 WFU_OlivierOxycodone[[9]] <- WFU_OlivierOxycodone[[9]][, -c(16:17), drop = F]
+
+
 
 WFU_OlivierOxycodone_test <- uniform.var.names.testingu01(WFU_OlivierOxycodone)
 
