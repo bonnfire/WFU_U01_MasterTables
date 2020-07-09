@@ -5,6 +5,8 @@
 #                     "Olivier_Co" = glimpse(WFU_Olivier_co_test_df), 
 #                     "Olivier_Oxy" = glimpse(WFU_Olivier_ox_test_df))
 
+library(data.table)
+
 shipments <- list("Kalivas_Italy" = WFU_KalivasItaly_test_df, 
                   "Kalivas" = WFU_Kalivas_test_df,
                   "Jhou" = WFU_Jhou_test_df,
@@ -23,16 +25,16 @@ shipments <- lapply(shipments, function(x){
 shipments_df <- rbindlist(shipments, id = "u01", fill = T)
 sapply(shipments_df, unique) # check if all formats are consistent # NOT YET!!
 
-shipments_df <- shipments_df %>% dplyr::filter(nchar(rfid) == 15) # XXXX excluding 5 cases for now, all from olivier's labs 
-# experiments <- mapply(append, experiments, "master_table") # by apurva's request
-shipments <- split(shipments_df, as.factor(shipments_df$U01))
-
-save(shipments, file = "shipments.RData")
-
-openxlsx::write.xlsx(shipments$Mitchell[2,], file = "u01_masterfile_template.xlsx")
-
-save(shipments_df, file = "shipmentswithU01col.RData")
-write.csv(shipments_df, file = "WFU_U01_shipments.csv")
+# shipments_df <- shipments_df %>% dplyr::filter(nchar(rfid) == 15) # excluding 1 case for now, from olivier's lab (oxy) 
+# # experiments <- mapply(append, experiments, "master_table") # by apurva's request
+# shipments <- split(shipments_df, as.factor(shipments_df$U01))
+# 
+# save(shipments, file = "shipments.RData")
+# 
+# openxlsx::write.xlsx(shipments$Mitchell[2,], file = "u01_masterfile_template.xlsx")
+# 
+# save(shipments_df, file = "shipmentswithU01col.RData")
+# write.csv(shipments_df, file = "WFU_U01_shipments.csv")
 
 
 

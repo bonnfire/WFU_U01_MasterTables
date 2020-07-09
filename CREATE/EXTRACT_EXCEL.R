@@ -8,6 +8,7 @@ library(lubridate)
 library(openxlsx)
 library(stringr)
 library(data.table)
+library(magrittr)
 
 # QC Wake Forest University Shipment 
 
@@ -821,11 +822,16 @@ WFU_OlivierCocaine[c(5:7)] <- lapply(WFU_OlivierCocaine[c(5:7)],
                                 return(x)})
 
 names(WFU_OlivierCocaine[[10]])[1:3] <- WFU_OlivierCocaine[[10]][1,1:3] %>% as.character()
+
+# remove extra columns
 WFU_OlivierCocaine[[10]] <- WFU_OlivierCocaine[[10]][, -(16:17) ]
 WFU_OlivierCocaine[[10]] %<>% 
   mutate(Sires = lead(Sires), 
          Dames = lead(Dames),
          `Animal ID` = lead(`Animal ID`))
+
+WFU_OlivierCocaine[[14]] <- WFU_OlivierCocaine[[14]][, -(16:18) ] # na, na, ageindays
+
 
 # clean first table to prevent code from confusing the dup shipment date columns
 WFU_OlivierCocaine[[1]] <- WFU_OlivierCocaine[[1]][, -c(which(names(WFU_OlivierCocaine[[1]])== "Cage Pair"):ncol(WFU_OlivierCocaine[[1]]))] # column 16 to end 
@@ -839,13 +845,13 @@ WFU_OlivierCocaine_test <- uniform.var.names.testingu01(WFU_OlivierCocaine)
 
 
 # create the naive/scrubs dataset before removing the na rows and clean up naive dataset 
-names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)"))
+names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)", "#12(6/30/2020)"))
 WFU_OlivierCocaine_naive_test <- lapply(WFU_OlivierCocaine_test, function(df) {
-  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
+  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS", "SCRUBBS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
-}) %>% rbindlist(use.names=T, idcol = "cohort") 
+}) %>% rbindlist(use.names=T, idcol = "cohort", fill = T) 
 
 # bc lapply cannot access list element names, we need to separately add the naive tables from the later cohorts 
 WFU_OlivierCocaine_naive_test <- WFU_OlivierCocaine_test$`#10(Scrubs)` %>%  
@@ -933,7 +939,7 @@ lapply(WFU_OlivierCocaine_test, function(x){
 })
 
 # rename all sheets (with correct cohort format)
-names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#11(1-13-2020)"))
+names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#11(1-13-2020)", "#12(6/30/2020)"))
 WFU_OlivierCocaine_test_df <- rbindlist(WFU_OlivierCocaine_test, id = "cohort", fill = T)
 WFU_OlivierCocaine_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
                              cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)),
@@ -1015,14 +1021,14 @@ WFU_OlivierOxycodone <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping 
 WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
 
 WFU_OlivierOxycodone[6:7] <- u01.importxlsx("UCSD #10 SHIPPING SHEET.xlsx")[c(2, 1)] # scrubs last
-#1/3 add shipment 17
+# 1/3 add shipment 7
 WFU_OlivierOxycodone[8:9] <- u01.importxlsx("UCSD #11 shipping sheet.xlsx")[c(3, 1)] # scrubs last
-# XX 06/30 add shipment ???? 
+# 06/30 add shipment 8
 WFU_OlivierOxycodone[10] <- u01.importxlsx("UCSD #12 shipping sheet.xlsx")[2] # scrubs last
 
 
 
-WFU_OlivierOxycodone[c(1:5, 7:9)] <- lapply(WFU_OlivierOxycodone[c(1:5, 7:9)], function(x){
+WFU_OlivierOxycodone[c(1:5, 7:10)] <- lapply(WFU_OlivierOxycodone[c(1:5, 7:10)], function(x){
   names(x) <- x[1, ] %>% as.character
   x <- x[-1, ]
 }) # remove first row of all tables prep for uniform variable name fxn
@@ -1031,15 +1037,15 @@ WFU_OlivierOxycodone[c(1:5, 7:9)] <- lapply(WFU_OlivierOxycodone[c(1:5, 7:9)], f
 WFU_OlivierOxycodone[[1]] <- WFU_OlivierOxycodone[[1]][, -c(16:18), drop = F]
 WFU_OlivierOxycodone[[8]] <- WFU_OlivierOxycodone[[8]][, -c(16:17), drop = F]
 WFU_OlivierOxycodone[[9]] <- WFU_OlivierOxycodone[[9]][, -c(16:17), drop = F]
-
+WFU_OlivierOxycodone[[10]] <- WFU_OlivierOxycodone[[10]][, -c(16:18), drop = F]
 
 
 WFU_OlivierOxycodone_test <- uniform.var.names.testingu01(WFU_OlivierOxycodone)
 
 # create the naive/scrubs dataset before removing it and clean up naive dataset 
-names(WFU_OlivierOxycodone_test) <- append(names(WFU_OlivierOxycodone)[1:5], c("#6(10-28-2019)", "#6(Scrubs)","#7(1-13-2020)", "#7(Scrubs)"))
+names(WFU_OlivierOxycodone_test) <- append(names(WFU_OlivierOxycodone)[1:5], c("#6(10-28-2019)", "#6(Scrubs)","#7(1-13-2020)", "#7(Scrubs)", "#8(6-30-2020)"))
 WFU_OlivierOxycodone_naive_test <- lapply(WFU_OlivierOxycodone_test, function(df) {
-  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS"))}) %>% which()
+  rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS", "SCRUBBS"))}) %>% which()
   if(length(rownumber) != 0){
     subset(df[rownumber:nrow(df),], grepl("^\\d+.+$", rfid))
   } else NULL
@@ -1131,7 +1137,7 @@ WFU_OlivierOxycodone_test[[6]] %>% dplyr::filter(weanage > 25) %>% select(labani
 WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, cbind, comment = NA, resolution = NA)
 
 # rename all sheets 
-names(WFU_OlivierOxycodone_test) <- append(WFU_Olivier_sheetnames, c("#6(10-28-19)", "#7(1-13-2020)") )
+names(WFU_OlivierOxycodone_test) <- append(WFU_Olivier_sheetnames, c("#6(10-28-19)", "#7(1-13-2020)","#8(6-30-2020)") )
 
 WFU_OlivierOxycodone_test_df <- rbindlist(WFU_OlivierOxycodone_test, id = "cohort", fill = T)
 WFU_OlivierOxycodone_test_df <- WFU_OlivierOxycodone_test_df %>% 
