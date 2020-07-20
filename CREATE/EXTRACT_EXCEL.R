@@ -67,7 +67,7 @@ uniform.date.testingu01 <- function(df){
   lapply(seq_along(df), function(i) {
     datecols <- c("dob", "dow", "shipmentdate")
     datefunction <- function(x){
-      if(is.POSIXct(x) == F){
+      if(lubridate::is.POSIXct(x) == F){
         as.POSIXct(as.numeric(x) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
       } else x
     }
@@ -805,9 +805,6 @@ WFU_OlivierCocaine[12:13] <- u01.importxlsx("UCSD #11 shipping sheet.xlsx")[c(2,
 # 06/30 add shipment 12
 WFU_OlivierCocaine[14] <- u01.importxlsx("UCSD #12 shipping sheet.xlsx")[1] # scrubs are included in this table
 
-
-## XX pick up from here 06/30/2020
-
 # set column names without "Cocaine and date" header
 WFU_OlivierCocaine[5:14] <- lapply(WFU_OlivierCocaine[5:14], 
                               function(x){
@@ -823,21 +820,27 @@ WFU_OlivierCocaine[c(5:7)] <- lapply(WFU_OlivierCocaine[c(5:7)],
 
 names(WFU_OlivierCocaine[[10]])[1:3] <- WFU_OlivierCocaine[[10]][1,1:3] %>% as.character()
 
-# remove extra columns
+# remove extra columns, should have 15 columns at this point
+names(WFU_OlivierCocaine) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)", "#12(6/30/2020)"))
+WFU_OlivierCocaine %>% sapply(ncol)
+
+
+WFU_OlivierCocaine[[1]] <- WFU_OlivierCocaine[[1]][, -c(which(names(WFU_OlivierCocaine[[1]])== "Cage Pair"):ncol(WFU_OlivierCocaine[[1]]))] # column 16 to end # clean first table to prevent code from confusing the dup shipment date columns
+
 WFU_OlivierCocaine[[10]] <- WFU_OlivierCocaine[[10]][, -(16:17) ]
 WFU_OlivierCocaine[[10]] %<>% 
   mutate(Sires = lead(Sires), 
          Dames = lead(Dames),
          `Animal ID` = lead(`Animal ID`))
 
-WFU_OlivierCocaine[[14]] <- WFU_OlivierCocaine[[14]][, -(16:18) ] # na, na, ageindays
-
-
-# clean first table to prevent code from confusing the dup shipment date columns
-WFU_OlivierCocaine[[1]] <- WFU_OlivierCocaine[[1]][, -c(which(names(WFU_OlivierCocaine[[1]])== "Cage Pair"):ncol(WFU_OlivierCocaine[[1]]))] # column 16 to end 
 # clean shipment 11 (tables 12 and 13, non scrubs and scrubs respectively) to prevent code confusion about "ageindays" experiment
 WFU_OlivierCocaine[[12]] <- WFU_OlivierCocaine[[12]][, -c(which(names(WFU_OlivierCocaine[[12]])== "NA"):ncol(WFU_OlivierCocaine[[12]]))] # column 16 to end 
 WFU_OlivierCocaine[[13]] <- WFU_OlivierCocaine[[13]][, -c(which(names(WFU_OlivierCocaine[[13]])== "NA"):ncol(WFU_OlivierCocaine[[13]]))] # column 16 to end 
+
+WFU_OlivierCocaine[[14]] <- WFU_OlivierCocaine[[14]][, -(16:18) ] # na, na, ageindays
+
+# WFU_OlivierCocaine %>% sapply(ncol)
+
 
 
 # # make variable names consistent
@@ -860,7 +863,7 @@ WFU_OlivierCocaine_naive_test <- WFU_OlivierCocaine_test$`#10(Scrubs)` %>%
   rbind(., WFU_OlivierCocaine_test$`#11(Scrubs)` %>%  
           mutate(cohort = "#11(1-13-2020)")) # order to preserve natural order # add scrubs from shipment #10 and #11
 
-# remove from olivier dataframe
+# remove naive tables from list as elements, later add them into the right cohort as comments
 WFU_OlivierCocaine_test[[10]] <- rbind(WFU_OlivierCocaine_test[[10]], WFU_OlivierCocaine_test[["#10(Scrubs)"]])
 WFU_OlivierCocaine_test[["#10(Scrubs)"]] <- NULL
 
@@ -1016,6 +1019,7 @@ WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "11") %>% group_by(rack) 
 ######################
 # Olivier(Oxycodone) #
 ######################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
 WFU_OlivierOxycodone <- u01.importxlsx("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
 
 WFU_Olivier_sheetnames <- excel_sheets("UCSD(SCRIPPS) Oxycodone Master Shipping Sheet.xlsx")
@@ -1085,6 +1089,7 @@ WFU_OlivierOxycodone_test <- lapply(WFU_OlivierOxycodone_test, function(x){
 })
 
 # check id values 
+idcols <- c("labanimalid", "accessid", "rfid")
 unique.values.length.by.col(WFU_OlivierOxycodone_test, idcols)
 
 # # checking the number of rfid digits
@@ -1226,4 +1231,15 @@ WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07", is.na(comment)) %
 WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
 WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
+
+
+
+## EXTRACT FRANCES TELESE 
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/Telese")
+
+# 6/29 # here is an updated list of RFID for HS rats that will be used for the single-nuclei sequencing project
+
+telese_rfid_singlenuclei <- read.csv("HS_RFID.csv") %>% 
+  clean_names %>% 
+  mutate_all(as.character)
 
