@@ -1234,12 +1234,30 @@ WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack
 
 
 
+
+
+## move later
+
+## 
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster")
+wfu_olivier_missing <- read_excel("Missing Transponder Response.xlsx") %>% 
+  clean_names %>% 
+  mutate_at(vars(matches("transponder")), as.character) %>% 
+  select(-matches("x\\d+|transponder_id_11"))
+
+
 ## EXTRACT FRANCES TELESE 
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/Telese")
 
 # 6/29 # here is an updated list of RFID for HS rats that will be used for the single-nuclei sequencing project
-
 telese_rfid_singlenuclei <- read.csv("HS_RFID.csv") %>% 
   clean_names %>% 
-  mutate_all(as.character)
-
+  mutate_all(as.character) %>% 
+  subset(!rat_id %in% c("M782","M979")) %>% 
+  rbind(., 
+        read_excel("HS_RFID_corr.xlsx") %>% 
+          clean_names() %>% 
+          tail(2) %>% 
+          mutate_all(as.character))
+# qc
+telese_rfid_singlenuclei %>% get_dupes(rfid) ## XX unresolved
