@@ -528,8 +528,8 @@ names(WFU_Mitchell)[4] <- "#4(10-08-2019)"
 # no need to reformat sheets, the column names are already characters
 
 # 3/6 add shipment 5
-WFU_Mitchell[[5]] <- u01.importxlsx("OSHU MITCHELL #5 Shipping Sheet.xlsx")[["MITCHELL"]] 
-names(WFU_Mitchell)[5] <- "#5(02-04-2020)"
+WFU_Mitchell[[5]] <- u01.importxlsx("OSHU MITCHELL #5 Shipping Sheet_with_notes.xlsx")[["MITCHELL"]] # instead of WFU's OSHU MITCHELL #5 Shipping Sheet because of shipping mistakes
+names(WFU_Mitchell)[5] <- "#5(02-04-2020)" ### table has more than 15 columns (with housing box and order in box information)
 
 ## reformat sheets 
 names(WFU_Mitchell[[5]]) <- WFU_Mitchell[[5]][1,]
@@ -543,12 +543,16 @@ pregnant <- WFU_Mitchell_test[[1]] %>%
   unlist %>% 
   as.vector # extract the pregnant cases to include as comment
 
-WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]][ , colSums(is.na(WFU_Mitchell_test[[1]])) == 0] # remove columns with any na's, checked for no na rows 
 
 
 # remove irrelevant columns
-WFU_Mitchell_test[[5]] <- WFU_Mitchell_test[[5]] %>% 
-  select(-c("na", "ageindays"))
+WFU_Mitchell_test <- lapply(WFU_Mitchell_test, function(x){
+  x <- x[ , colSums(is.na(x)) == 0]  # remove columns with any na's, checked for no na rows 
+  x <- x %>% 
+    select(-matches("age|last"))  # remove age in day columns or last 5 digit columns
+  return(x)
+}) # remove columns with any na's, checked for no na rows 
+
 
 ## reformat dates
 WFU_Mitchell_test[[1]] <- WFU_Mitchell_test[[1]] %>% 
@@ -1258,6 +1262,34 @@ telese_rfid_singlenuclei <- read.csv("HS_RFID.csv") %>%
         read_excel("HS_RFID_corr.xlsx") %>% 
           clean_names() %>% 
           tail(2) %>% 
-          mutate_all(as.character))
-# qc
-telese_rfid_singlenuclei %>% get_dupes(rfid) ## XX unresolved
+          mutate_all(as.character)) %>% # ("2 rats on the list were swapped, due to double assignments from the biobank" - Lieselot)
+  distinct() %>%  ## remove the duplicate ("It is a duplication in this summary table indeed, there was no additional animal analyzed that should replace that entry, it can just be deleted. )
+  mutate(rfid = replace(rfid, rat_id == "M876", "933000320047321"))
+
+# expecting to find genotype data
+telese_rfid_singlenuclei %>% 
+  left_join(flowcell_df[,c("rfid", "library")], by = "rfid") %>% 
+  left_join(genotype_df[, c("sample_name", "library","genotype_id")], by = c("rfid" = "sample_name")) %>% # library.x and library.y should match
+  select(genotype_id) %>% 
+  subset(!is.na(genotype_id)) %>% 
+  unlist() %>% 
+  as.character() %>% 
+  write(file = "genotype_id_n10.txt")
+
+telese_rfid_singlenuclei %>% 
+  left_join(flowcell_df[,c("rfid", "library")], by = "rfid") %>% 
+  subset(!is.na(library)) %>% 
+  select(rfid) %>% 
+  unlist() %>% 
+  as.character() %>% 
+  write(file = "hs_telese_id_n10.txt")
+
+## send updated Excel to Telese team
+telese_rfid_singlenuclei %>% 
+  left_join(flowcell_df[,c("rfid", "library")], by = "rfid") %>% 
+  openxlsx::write.xlsx(., file = "telese_genotype_list.xlsx")
+
+
+## Olivier's lab records of Telese
+telese_coc_biobank <- read_xlsx("Telese_Palmer.xlsx") %>% 
+  clean_names
