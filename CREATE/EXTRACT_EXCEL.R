@@ -953,8 +953,8 @@ WFU_OlivierCocaine_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\
                              rfid = replace(rfid, rfid == "93300120117313", "933000120117313"),
                              rfid = replace(rfid, rfid == "93300120117309", "933000120117309"),
                              rfid = replace(rfid, rfid == "93300120117330", "933000120117330"),
-                             rfid = replace(rfid, rfid == "93300120117315", "933000120117315")) #replacement of cohort 1 rfid's bc of the confirmation from olivier labs' sheets
-
+                             rfid = replace(rfid, rfid == "93300120117315", "933000120117315")) %<>%  #replacement of cohort 1 rfid's bc of the confirmation from olivier labs' sheets
+  mutate(rfid = replace(rfid, rfid == "933000320047343", "933000320047009"))
 # append naive/scrub comment to dataframe
 # # add comment of scrubs for matching rfid 
 WFU_OlivierCocaine_test_df <- WFU_OlivierCocaine_test_df %>% 
@@ -1293,3 +1293,11 @@ telese_rfid_singlenuclei %>%
 ## Olivier's lab records of Telese
 telese_coc_biobank <- read_xlsx("Telese_Palmer.xlsx") %>% 
   clean_names
+
+# which ones do we have and they don't have
+telese_rfid_singlenuclei %>% 
+  left_join(flowcell_df[, c("rfid", "library")], by = "rfid") %>% 
+  left_join(telese_coc_biobank[, c("rat", "spleen")], by = c("rat_id"="rat")) %>% 
+  subset(!is.na(library)&is.na(spleen))
+# which ones do they have and we don't
+anti_join(telese_coc_biobank, telese_rfid_singlenuclei, by = c("rat" = "rat_id"))
