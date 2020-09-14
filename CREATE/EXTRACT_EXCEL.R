@@ -428,6 +428,13 @@ WFU_Jhou[[15]] <- u01.importxlsx("Jhou #15 shipping sheet.xlsx")[["Jhou"]] # fro
 # # make within-df variable names consistent and fix sires/dames column name issue
 names(WFU_Jhou)[15] <- "#15(06-22-2020)" 
 
+## 09/10 add cohort
+WFU_Jhou[[16]] <- u01.importxlsx("Jhou #16 shipping sheet.xlsx")[["Jhou"]] # from WFU (Angela) email "Please refer to the tab named JHOU. Let me know if there are any questions. ARP- The tab labeled ARP is for the convenience of shipping."
+
+# # make within-df variable names consistent and fix sires/dames column name issue
+names(WFU_Jhou)[16] <- "#16(08-17-2020)" 
+
+
 
 # # make within-df variable names consistent and fix sires/dames column name issue
 WFU_Jhou_test <- uniform.var.names.testingu01(WFU_Jhou)
@@ -482,7 +489,11 @@ names(WFU_Jhou_test) <- names(WFU_Jhou)
 
 WFU_Jhou_test_df <- bind_rows(WFU_Jhou_test, .id = "cohort") # create this format for rfidandcohort data that are joined with raw data
 WFU_Jhou_test_df %<>% mutate(cohort = gsub("#(\\d+)[(].*", "\\1", cohort),
-  cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)))
+  cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)),
+  comment = as.character(comment),
+  comment = coalesce(comment, notes)) %<>%
+  select(-notes) %<>%
+  mutate_all(as.character)
 
 # check number of rat siblings in each cohort # cohort 13 has all two siblings
 # and 
@@ -499,23 +510,25 @@ WFU_Jhou_test_df %>% mutate(U01 = "Jhou") %>%
   add_count() %>% 
   rename("siredamepair_in_u01"="n") %>% 
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
-  dplyr::filter(cohort == "15") %>%
+  dplyr::filter(cohort == "16") %>%
   unique() %>% 
   arrange(U01, sires) %>%
   data.frame() 
 
 ## check no same sex siblings (diff litter)
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% janitor::get_dupes(sires, dames, sex)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check no same sex littermates (same litter)
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% 
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_Jhou_test_df %>% dplyr::filter(cohort == "15") %>% group_by(rack) %>% count(sex) 
+WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>% group_by(rack) %>% count(sex) 
 
-
+# save file 
+setwd("~/Desktop/Database/csv files/u01_tom_jhou")
+write.csv(WFU_Jhou_test_df, file = "mastertable_c01_16_jhou.csv", row.names = F) 
 
 ######################
 ######## MITCHELL ####
@@ -1064,12 +1077,18 @@ WFU_OlivierOxycodone_naive_test <- lapply(WFU_OlivierOxycodone_test, function(df
 WFU_OlivierOxycodone_naive_test <- WFU_OlivierOxycodone_test$`#6(Scrubs)` %>%  
   mutate(cohort = "#6(10-28-2019)") %>%
   rbind(WFU_OlivierOxycodone_naive_test,.) %>%  # order to preserve natural order # add scrubs from shipment #16 
-  rbind(., WFU_OlivierOxycodone_test$`#7(Scrubs)` %>% mutate(cohort = "#7(1-13-2020)"))
+  rbind(., WFU_OlivierOxycodone_test$`#7(Scrubs)` %>% mutate(cohort = "#7(1-13-2020)")) %>% 
+  mutate_at(vars(matches("do[bw]|shipmentdate")), openxlsx::converttoDate)
 # # remove all entries after 'scrubs' ** EXPERIMENTER SPECIFIC **
 # see remove.scrubs.and.narows documentation
 # WFU_OlivierOxycodone_test <- remove.scrubs.and.narows(WFU_OlivierOxycodone_test) # remove rows that don't have rfid to include the trailing date case in sheet 5
 
 # remove from olivier dataframe
+# prevent any binding issues 
+WFU_OlivierOxycodone_test <- WFU_OlivierOxycodone_test %>% lapply(function(x){
+  x <- x %>% 
+    mutate_all(as.character)
+})
 WFU_OlivierOxycodone_test[[6]] <- rbind(WFU_OlivierOxycodone_test[[6]], WFU_OlivierOxycodone_test[["#6(Scrubs)"]])
 WFU_OlivierOxycodone_test[["#6(Scrubs)"]] <- NULL
 
@@ -1079,6 +1098,7 @@ WFU_OlivierOxycodone_test[["#7(Scrubs)"]] <- NULL
 # change date type
 WFU_OlivierOxycodone_test[[2]]$shipmentdate <- as.POSIXct("2018-09-11", tz = "UTC") # must add shipment date to sheet 2 
 WFU_OlivierOxycodone_test[[6]][which(WFU_OlivierOxycodone_test[[6]]$dow == "10/31/20169"),]$dow <- "43769"
+WFU_OlivierOxycodone_test[[6]]$shipmentdate <- as.POSIXct("2019-11-12", tz = "UTC")
 WFU_OlivierOxycodone_test <- uniform.date.testingu01(WFU_OlivierOxycodone_test)
 
 # because of inconsistent date types, remove from olivier dataframe
@@ -1252,6 +1272,24 @@ wfu_olivier_missing <- read_excel("Missing Transponder Response.xlsx") %>%
 
 ## EXTRACT FRANCES TELESE 
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/Telese")
+
+# 09/14
+# addl two to send to Telese 
+data.frame(rfid = c("933000120138592", "933000320047328")) %>% 
+  mutate_all(as.character) %>% 
+  left_join(flowcell_df[,c("rfid", "library")], by = "rfid") %>% 
+  left_join(genotype_df[, c("sample_name", "library","genotype_id")], by = c("rfid" = "sample_name")) %>% # library.x and library.y should match
+  select(genotype_id) %>% 
+  unlist() %>% 
+  as.character() %>% 
+  write(file = "genotype_id_n2.txt")
+
+data.frame(rfid = c("933000120138592", "933000320047328")) %>% 
+  mutate_all(as.character) %>% 
+  unlist() %>% 
+  as.character() %>% 
+  write(file = "hs_telese_id_n2.txt")
+
 
 # 6/29 # here is an updated list of RFID for HS rats that will be used for the single-nuclei sequencing project
 telese_rfid_singlenuclei <- read.csv("HS_RFID.csv") %>% 
