@@ -822,8 +822,11 @@ WFU_OlivierCocaine[12:13] <- u01.importxlsx("UCSD #11 shipping sheet.xlsx")[c(2,
 # 06/30 add shipment 12
 WFU_OlivierCocaine[14] <- u01.importxlsx("UCSD #12 shipping sheet.xlsx")[1] # scrubs are included in this table
 
+# 06/30 add shipment 13
+WFU_OlivierCocaine[15] <- u01.importxlsx("UCSD #13 Shipping Sheet.xlsx")[1] # scrubs are included in this table
+
 # set column names without "Cocaine and date" header
-WFU_OlivierCocaine[5:14] <- lapply(WFU_OlivierCocaine[5:14], 
+WFU_OlivierCocaine[5:15] <- lapply(WFU_OlivierCocaine[5:15], 
                               function(x){
                                 names(x) <- x[1,] %>% as.character()
                                 x <- x[-1, ]
@@ -838,7 +841,7 @@ WFU_OlivierCocaine[c(5:7)] <- lapply(WFU_OlivierCocaine[c(5:7)],
 names(WFU_OlivierCocaine[[10]])[1:3] <- WFU_OlivierCocaine[[10]][1,1:3] %>% as.character()
 
 # remove extra columns, should have 15 columns at this point
-names(WFU_OlivierCocaine) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)", "#12(6/30/2020)"))
+names(WFU_OlivierCocaine) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)", "#12(6/30/2020)", "#13(9/8/2020)"))
 WFU_OlivierCocaine %>% sapply(ncol)
 
 
@@ -855,7 +858,7 @@ WFU_OlivierCocaine[[12]] <- WFU_OlivierCocaine[[12]][, -c(which(names(WFU_Olivie
 WFU_OlivierCocaine[[13]] <- WFU_OlivierCocaine[[13]][, -c(which(names(WFU_OlivierCocaine[[13]])== "NA"):ncol(WFU_OlivierCocaine[[13]]))] # column 16 to end 
 
 WFU_OlivierCocaine[[14]] <- WFU_OlivierCocaine[[14]][, -(16:18) ] # na, na, ageindays
-
+WFU_OlivierCocaine[[15]] <- WFU_OlivierCocaine[[15]][, -(16) ] # na, na, ageindays
 # WFU_OlivierCocaine %>% sapply(ncol)
 
 
@@ -865,7 +868,7 @@ WFU_OlivierCocaine_test <- uniform.var.names.testingu01(WFU_OlivierCocaine)
 
 
 # create the naive/scrubs dataset before removing the na rows and clean up naive dataset 
-names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)", "#12(6/30/2020)"))
+names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#10(Scrubs)", "#11(1-13-2020)", "#11(Scrubs)", "#12(6/30/2020)", "#13(9/8/2020)"))
 WFU_OlivierCocaine_naive_test <- lapply(WFU_OlivierCocaine_test, function(df) {
   rownumber <- apply(df, MARGIN = 1, function(r){any(r %in% c("Scrubs", "Scrub", "ITALY EXTRA 15 RATS", "SCRUBBS"))}) %>% which()
   if(length(rownumber) != 0){
@@ -959,7 +962,7 @@ lapply(WFU_OlivierCocaine_test, function(x){
 })
 
 # rename all sheets (with correct cohort format)
-names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#11(1-13-2020)", "#12(6/30/2020)"))
+names(WFU_OlivierCocaine_test) <- append(names(WFU_OlivierCocaine)[1:9], c("#10(10-28-2019)", "#11(1-13-2020)", "#12(6/30/2020)", "#13(9/8/2020)"))
 WFU_OlivierCocaine_test_df <- rbindlist(WFU_OlivierCocaine_test, id = "cohort", fill = T)
 WFU_OlivierCocaine_test_df %<>% mutate(cohort = stringr::str_match(cohort, "#(\\d+).*?")[,2],
                              cohort = ifelse(nchar(cohort) > 1, cohort, gsub('([[:digit:]]{1})$', '0\\1', cohort)),
@@ -977,18 +980,6 @@ WFU_OlivierCocaine_test_df <- WFU_OlivierCocaine_test_df %>%
 # WFU_OlivierCocaine_test_df_withnaive %>% dplyr::filter(!is.na(comment)) %>% group_by(cohort) %>% count()
 
 
-
-
-# check the sexes # this qc can only be applied to some animals because of the format of their lab animal id's
-WFU_OlivierCocaine_test_df %>%
-  dplyr::filter(grepl("^HS", labanimalid)) %>% 
-  mutate(sex_fromid = substr(labanimalid, 3, 3)) %>% 
-  dplyr::filter(sex_fromid != sex ) # nothing wrong 
-# Outstanding issues: 
-# between #6 and #7, it goes from 419 to TJ420 in labanimalnumber
-# diff bw labanimalid vs labanimalnumber 
-# id is the letter followed by numbers and number should all be number (currently mistranslated -- should be fixed now)
-
 ## check # siblings from prev cohort 
 WFU_OlivierCocaine_test_df %>% mutate(U01 = "OlivierCocaine") %>% 
   group_by(sires, dames, cohort, U01) %>% 
@@ -1000,38 +991,43 @@ WFU_OlivierCocaine_test_df %>% mutate(U01 = "OlivierCocaine") %>%
   add_count() %>% 
   rename("siredamepair_in_u01"="n") %>% 
   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
-  dplyr::filter(cohort == "11") %>%
+  dplyr::filter(cohort == "13") %>%
   unique() %>% 
   arrange(U01, sires) %>%
   data.frame() 
 
-sibs_matches_cocaine <- WFU_OlivierCocaine_test_df %>% mutate(U01 = "OlivierCocaine") %>% 
-  group_by(sires, dames, cohort, U01) %>% 
-  add_count() %>% 
-  select(U01, sires, dames, cohort, n) %>% 
-  ungroup() %>% 
-  rename("siredamepair_in_cohort"="n") %>% 
-  group_by(sires,dames, U01) %>% 
-  add_count() %>% 
-  rename("siredamepair_in_u01"="n") %>% 
-  dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
-  dplyr::filter(cohort == "11") %>%
-  unique() %>% 
-  arrange(U01, sires) %>%
-  data.frame() %>% 
-  select(sires, dames)
-WFU_OlivierCocaine_test_df %>% dplyr::filter(sires %in% sibs_matches_cocaine$sires, dames %in% sibs_matches_cocaine$dames)
+# sibs_matches_cocaine <- WFU_OlivierCocaine_test_df %>% mutate(U01 = "OlivierCocaine") %>% 
+#   group_by(sires, dames, cohort, U01) %>% 
+#   add_count() %>% 
+#   select(U01, sires, dames, cohort, n) %>% 
+#   ungroup() %>% 
+#   rename("siredamepair_in_cohort"="n") %>% 
+#   group_by(sires,dames, U01) %>% 
+#   add_count() %>% 
+#   rename("siredamepair_in_u01"="n") %>% 
+#   dplyr::filter(siredamepair_in_cohort != siredamepair_in_u01) %>% 
+#   dplyr::filter(cohort == "13") %>%
+#   unique() %>% 
+#   arrange(U01, sires) %>%
+#   data.frame() %>% 
+#   select(sires, dames)
+# WFU_OlivierCocaine_test_df %>% dplyr::filter(sires %in% sibs_matches_cocaine$sires, dames %in% sibs_matches_cocaine$dames)
 
 ## check # of same sex siblings (diff litter)
-WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "11") %>% janitor::get_dupes(sires, dames, sex)
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "13") %>% janitor::get_dupes(sires, dames, sex)
 
 ## check # of same sex littermates (same litter)
-WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "11") %>% janitor::get_dupes(sires, dames, litternumber, sex)
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "13") %>% janitor::get_dupes(sires, dames, litternumber, sex)
 
 ## check number of same sex rats in each rack and get number of rat sexes in each rack
-WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "11") %>% 
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "13") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
-WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "11") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table()
+WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "13") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table()
+
+## reformat cohort and write as csv to upload into database
+WFU_OlivierCocaine_test_df <- WFU_OlivierCocaine_test_df %>% mutate(cohort = paste0("C", cohort)) 
+setwd("~/Desktop/Database/csv files/u01_olivier_george_cocaine")
+WFU_OlivierCocaine_test_df %>% write.csv("cocaine_c01_13_n936.csv", row.names = F)
 
 ######################
 # Olivier(Oxycodone) #
