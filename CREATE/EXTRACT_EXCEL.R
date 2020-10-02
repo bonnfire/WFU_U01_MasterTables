@@ -668,132 +668,14 @@ WFU_Mitchell_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% co
 
 
 
+setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_")
+mitchell_wfu_c01_05 <- list.files(pattern = ".*xlsx")
+lapply(mitchell_wfu_c01_05, clean_mitchell_wfu_xl) 
+clean_mitchell_wfu_xl <- function(x){
+  # read the data in 
+  file <- u01.importxlsx(x)
 
-## XX INCOMPLETE  
-# # # validate dates 
-# QC(WFU_Mitchell_test)
-# 
-# # # check for outliers
-# 
-# # # collect counts for each column
-# cols <- c("Dames", "Sires", grep("ID|Lab_Animal", names(WFU_Mitchell_test[[1]]), value = T) %>% unlist())
-# table(WFU_Mitchell_test[[1]][c("Shipment_Box", "Ear_Punch")])
-# 
-# map(WFU_Mitchell_test, ~ count(., Sex)) # replace sex with any of the variables, but figure out a way to output all interested variables
-# map(WFU_Mitchell_test, ~ count(., Dames, Sires, Litter_Number))
-# 
-# map(WFU_Mitchell_test, ~ count(., Litter_Number, Litter_Size))
-# 
-# map(WFU_Mitchell_test, ~ subset(., Dames==Sires))
-# 
-# map_interestedvars <- function(df, vector){
-#   for(i in 1:length(vector))
-#   map(WFU_Mitchell_test, ~ count(., Sex))
-# }
-# 
-# map(WFU_Mitchell_test, ~ count(., Dames, Sires, Sex) %>% 
-#                      subset(n != 1))
-# 
-# # graphics for email
-# Mitchell_SameSexSiblings <- map(WFU_Mitchell_test, ~ count(., Dames, Sires, Sex) %>%
-#                               subset(n!=1) %>% 
-#                               nrow)
-# All_Mitchell <- bind_rows(WFU_Mitchell_test) %>% count(Dames, Sires) %>% subset(is.na(Dames) == F)
-# ggplot(All_Mitchell, aes(n)) + geom_bar() + ggtitle("All Mitchell Shipments") +
-#   xlab("Number of siblings in one shipment") + ylab("Count") + 
-#   geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5),size=4)
-# 
-# # # subset original dataset to extract cases
-# # WFU_Mitchell_problemsubset<- lapply(seq_along(WFU_Mitchell_test), 
-# #                                 function(i) subset(WFU_Mitchell_test[[i]], Dames %in% conds_mitch[[i]]$Dames & Sires %in% conds_mitch[[i]]$Sires))
-# WFU_Mitchell_problemsubset <- map(WFU_Mitchell_test, ~ group_by(.x, Dames, Sires, Sex) %>% 
-#       filter(n() > 1))
-# names(WFU_Mitchell_problemsubset) <- names(WFU_Mitchell_test)
-# Mitchell_listDF <- list("#1(10-30-18)"=WFU_Mitchell_problemsubset[["#1(10-30-18)"]][,-(15:18)], 
-#                     "#2(2-26-19)"=WFU_Mitchell_problemsubset[["#2(2-26-19)"]],
-#                     "#3(6-17-19)"=WFU_Mitchell_problemsubset[["#3(6-17-19)"]])  
-# 
-# write.xlsx(Mitchell_listDF, file = "Mitchell_SiblingSubset.xlsx", append = T)
-# 
-# # # subset original dataset to extract one sib cases
-# WFU_Mitchell_problem2subset <- map(WFU_Mitchell_test, ~ group_by(.x, Dames, Sires) %>% 
-#                                     filter(n() == 1))
-# names(WFU_Mitchell_problem2subset) <- names(WFU_Mitchell_test)
-# Mitchell_list2DF <- list("#1(10-30-18)"=WFU_Mitchell_problem2subset[["#1(10-30-18)"]][,-(15:18)], 
-#                         "#2(2-26-19)"=WFU_Mitchell_problem2subset[["#2(2-26-19)"]],
-#                         "#3(6-17-19)"=WFU_Mitchell_problem2subset[["#3(6-17-19)"]])  
-# write.xlsx(Mitchell_list2DF, file = "Mitchell_OneSiblingSubset.xlsx", append = T)
-# 
-# table(WFU_Mitchell_test[[3]]$Dames, WFU_Mitchell_test[[3]]$Sires) %>% knitr::kable()
-# # WFU_Mitchell_test %>% 
-# #   dplyr::select(-one_of(cols))  %>% 
-# #   map(table)
-# # str_extract_all(names(WFU_Mitchell_test, "ID") %>% unlist()))
-# # %>% map(table)
-# 
-# # # collect counts for each experiment 
-# ## plan: link with mitchell data to know which experiment 
-# 
-# 
-# # # check litter size 
-# map(WFU_Mitchell_test, ~ count(., Litter_Number))
-# map(WFU_Mitchell_test, ~ count(., Litter_Size))
-# 
-# 
-# map(WFU_Mitchell_test, ~ group_by(., Shipment_Box, Sex) %>%
-#       summarise(Count = n()))
-# 
-# map(WFU_Mitchell_test, ~ group_by(., Dames, Sires, Litter_Size) %>%
-#       summarise(Count = n()))
-# 
-# map(WFU_Mitchell_test, ~ group_by(., Dames, Sires) %>%
-#       summarise(Count = n()))
-# 
-# map(WFU_Mitchell_test, ~ group_by(., Dames, Sires) %>% 
-#       summarise(n = n()) %>%
-#       tidyr::spread(Sires, n)) %>%
-#   na.omit() %>%
-#       knitr::kable()
-# # # parents and number of offspring
-# UniqueParents <- map(WFU_Mitchell_test, ~ count(., Dames, Sires)) 
-# knitr::kable(UniqueParents)
-# 
-# # # summary for family size
-# options(digits = 2) 
-# lapply(UniqueParents, function(df)
-#   sapply(df["n"], table))
-# lapply(UniqueParents, function(df)
-#   sapply(df["n"], summary))
-# 
-# map(UniqueParents, ggplot(.) + geom_histogram(aes(n)))
-# 
-# ggplot(UniqueParents[[1]]) + geom_histogram(aes(n))
-# ggplot(UniqueParents[[2]]) + geom_histogram(aes(n))
-# ggplot(UniqueParents[[3]]) + geom_histogram(aes(n))
-# ############################## map(~ggplot(mtcars, aes_string(x = .)) + geom_histogram())
-# 
-# map(WFU_Mitchell_test, ~ count(., Dames))
-# map(WFU_Mitchell_test, ~ count(., Sires))
-# 
-# # # tabulate by sex and parents
-# 
-# # highlight <- createStyle()
-# # conditionalFormatting(WFU_Mitchell_1, )
-# 
-# # check coatcolor 
-# lapply(WFU_Mitchell_test, function(df)
-#   sapply(df["coatcolor"], unique))
-# WFU_Mitchell_test <- uniform.coatcolors(WFU_Mitchell_test)
-# # check coatcolor consistency with
-# # lapply(WFU_Mitchell_test, function(df)
-# # sapply(df["coatcolor"], unique))
-# 
-# # # check data type 
-# str(WFU_Mitchell_test)
-# 
-# # # create log table to be imported into sql
-# 
-# # 
+  }
 
 ######################
 ## Olivier(Cocaine) ##
