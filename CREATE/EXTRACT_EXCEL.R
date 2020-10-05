@@ -670,12 +670,110 @@ WFU_Mitchell_test_df %>% dplyr::filter(cohort == "04") %>% group_by(rack) %>% co
 
 setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_")
 mitchell_wfu_c01_05 <- list.files(pattern = ".*xlsx")
-lapply(mitchell_wfu_c01_05, clean_mitchell_wfu_xl) 
-clean_mitchell_wfu_xl <- function(x){
-  # read the data in 
-  file <- u01.importxlsx(x)
 
-  }
+#### important functions
+# use this function to make variables uniform once the variables are in the names()
+uniform.var.names.cohort <- function(df){
+  names(df) <- mgsub::mgsub(names(df),
+                            c(" |\\.", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                            c("", "Number", "RFID", "DOW","LabAnimal", "Shipment", "Dames"))
+  
+  names(df) <- mgsub::mgsub(names(df),
+                            c("DateofShipment", "LabAnimalNumber"), 
+                            c("ShipmentDate", "LabAnimalID")) # actually keep the column named lab animal number
+  names(df) <- tolower(names(df))
+  return(df)
+}
+
+# use this function to get rid of columns that are all na's or contain redundant information
+remove.irr.columns <- function(df){
+  df <- df[ , colSums(is.na(df)) == 0]  # remove columns with any na's, checked for no na rows 
+  df <- df %>% 
+    select(-matches("age|last"))  # remove age in day columns or last 5 digit columns
+  return(df)
+}
+
+# use this function to make all coat colors unifrom
+uniform.coatcolors.df <- function(df){
+  df$coatcolor <- toupper(df$coatcolor)  
+  df$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", mgsub::mgsub(df$coatcolor, 
+                                                                        c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood|[H|h]hod", "[A|a]lbino"), 
+                                                                        c("BROWN", "BLACK", "HOOD", "ALBINO"))) 
+  return(df)
+}
+
+## add shipment age and weaning age AND QC 
+add.age.qc <- function(df){
+  df <- df %>% 
+    mutate(shipmentage = as.numeric(difftime(shipmentdate, dob, units = "days")) %>% round)
+  try(if(any(df$shipmentage > 65)) 
+    stop("Some animals were too old to ship"))
+  
+  df <- df %>%
+    mutate(weanage = as.numeric(difftime(dow, dob, units = "days")) %>% round) 
+  try(if(any(df$weanage > 25))
+    stop("Some animals were too old to wean"))    
+  
+  return(df)
+}
+
+## QC for duplicated or incorrectly formatted rfids, genetic diversity in siblings 
+id.qc <- function(df){
+  ## check if any rfid are duplicated
+  suppressMessages(janitor::get_dupes(df, rfid))
+
+  ## check for duplicated accessid and labanimalid
+  suppressMessages(janitor::get_dupes(df, accessid))
+  suppressMessages(janitor::get_dupes(df, labanimalid))
+  
+  # check if any rfid's are not in the usual 15 character format
+  try(if(any(nchar(df$rfid) != 15))
+    stop("Inconsistent rfid formatting"))
+  
+  ## check # of same sex siblings (diff litter)
+  try(if(nrow(df %>% janitor::get_dupes(sires, dames, sex)) != 1)
+      stop("Same sex siblings in different litter"))
+  
+  ## check # of same sex littermates (same litter)
+  try(if(nrow(df %>% janitor::get_dupes(sires, dames, litternumber,sex)) != 1)
+    stop("Same sex siblings in same litter"))
+}
+
+### COHORT 1 -- MITCHELL
+mitchell_c01_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[1])$`Import-Info` %>% 
+  uniform.var.names.cohort %>% 
+  rename("sires" = "parents",
+         "dames" = "2") %>% 
+  mutate(shipmentdate = as.POSIXct("2018-10-30", format="%Y-%m-%d")) %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+mitchell_c01_wfu_metadata %>% id.qc
+# add comments 
+mitchell_c01_wfu_metadata <- mitchell_c01_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  mutate(sex = replace(sex, rfid == "933000320045902", "M")) %>% # Impregnated the box, comment noted by Mitchell team
+  mutate(comments = replace(comments, housingbox == "9999", "Pregnant female/Impregnated"), 
+         resolution = replace(resolution, housingbox == "9999", "REMOVE_FROM_EXCLUSION_AND_REPLACE"))
+
+
+### COHORT 2 -- MITCHELL
+mitchell_c02_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[2])$`Import-Info` %>% 
+  uniform.var.names.cohort %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+mitchell_c02_wfu_metadata %>% id.qc
+# add comments 
+mitchell_c02_wfu_metadata <- mitchell_c02_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  mutate(sex = replace(sex, rfid == "933000320045902", "M")) %>% # Impregnated the box, comment noted by Mitchell team
+  mutate(comments = replace(comments, housingbox == "9999", "Pregnant female/Impregnated"), 
+         resolution = replace(resolution, housingbox == "9999", "REMOVE_FROM_EXCLUSION_AND_REPLACE"))
+
+
+
+
 
 ######################
 ## Olivier(Cocaine) ##
