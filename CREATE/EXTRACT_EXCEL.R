@@ -702,8 +702,18 @@ uniform.coatcolors.df <- function(df){
   return(df)
 }
 
+
 ## add shipment age and weaning age AND QC 
 add.age.qc <- function(df){
+  date_vars <- c("dob", "dow", "shipmentdate")
+  datefunction <- function(x){
+    if(lubridate::is.POSIXct(x) == F & all(grepl("^\\d{5}$", x))){
+      as.POSIXct(as.numeric(x) * (60*60*24), origin="1899-12-30", tz="UTC", format="%Y-%m-%d")
+    } else x
+  }
+  df <- df %>% 
+    mutate_at(.vars = vars(date_vars), .funs = datefunction)
+  
   df <- df %>% 
     mutate(shipmentage = as.numeric(difftime(shipmentdate, dob, units = "days")) %>% round)
   try(if(any(df$shipmentage > 65)) 
@@ -741,6 +751,7 @@ id.qc <- function(df){
 
 ### COHORT 1 -- MITCHELL
 mitchell_c01_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[1])$`Import-Info` %>% 
+  mutate(cohort = "C01") %>% 
   uniform.var.names.cohort %>% 
   rename("sires" = "parents",
          "dames" = "2") %>% 
@@ -759,6 +770,7 @@ mitchell_c01_wfu_metadata <- mitchell_c01_wfu_metadata %>%
 
 ### COHORT 2 -- MITCHELL
 mitchell_c02_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[2])$`Import-Info` %>% 
+  mutate(cohort = "C02") %>% 
   uniform.var.names.cohort %>% 
   remove.irr.columns %>% 
   uniform.coatcolors.df %>% 
@@ -766,13 +778,57 @@ mitchell_c02_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[2])$`Import-Info
 mitchell_c02_wfu_metadata %>% id.qc
 # add comments 
 mitchell_c02_wfu_metadata <- mitchell_c02_wfu_metadata %>% 
-  mutate(comments = "NA", resolution = "NA") %>% 
-  mutate(sex = replace(sex, rfid == "933000320045902", "M")) %>% # Impregnated the box, comment noted by Mitchell team
-  mutate(comments = replace(comments, housingbox == "9999", "Pregnant female/Impregnated"), 
-         resolution = replace(resolution, housingbox == "9999", "REMOVE_FROM_EXCLUSION_AND_REPLACE"))
+  mutate(comments = "NA", resolution = "NA") 
 
+### COHORT 3 -- MITCHELL
+mitchell_c03_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[3])$`Import-Info` %>% 
+  mutate(cohort = "C03") %>% 
+  uniform.var.names.cohort %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+mitchell_c03_wfu_metadata %>% id.qc
+# add comments 
+mitchell_c03_wfu_metadata <- mitchell_c03_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") 
 
+### COHORT 4 -- MITCHELL
+mitchell_c04_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[4])$`Import-Info` %>% 
+  mutate(cohort = "C04") %>% 
+  uniform.var.names.cohort %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+mitchell_c04_wfu_metadata %>% id.qc
+# add comments 
+mitchell_c04_wfu_metadata <- mitchell_c04_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") 
 
+### COHORT 5 -- MITCHELL
+mitchell_c05_wfu_metadata <- u01.importxlsx(mitchell_wfu_c01_05[5])$`Import-Info` 
+names(mitchell_c05_wfu_metadata) <- mitchell_c05_wfu_metadata[1,] %>% as.character()
+mitchell_c05_wfu_metadata <- mitchell_c05_wfu_metadata[-1, ]
+mitchell_c05_wfu_metadata <- mitchell_c05_wfu_metadata %>% 
+  uniform.var.names.cohort %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc %>% 
+  mutate_at(vars(matches("litter|box")), as.numeric) %>% 
+  mutate(cohort = "C05") 
+
+mitchell_c05_wfu_metadata %>% id.qc
+# add comments 
+mitchell_c05_wfu_metadata <- mitchell_c05_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") 
+
+mitchell_wfu_metadata_c01_05 <- bind_rows(mitchell_c01_wfu_metadata, mitchell_c02_wfu_metadata) %>% 
+  bind_rows(mitchell_c03_wfu_metadata) %>% 
+  bind_rows(mitchell_c04_wfu_metadata) %>% 
+  bind_rows(mitchell_c05_wfu_metadata)
+
+# remove order in box (per Deborah's email 10/08)
+mitchell_wfu_metadata_c01_05 <- mitchell_wfu_metadata_c01_05 %>% 
+  select(-matches("order"))
 
 
 ######################
