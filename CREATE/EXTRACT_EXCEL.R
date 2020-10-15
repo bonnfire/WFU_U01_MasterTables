@@ -530,6 +530,21 @@ WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>% group_by(rack) %>% count(
 setwd("~/Desktop/Database/csv files/u01_tom_jhou")
 write.csv(WFU_Jhou_test_df, file = "mastertable_c01_16_jhou.csv", row.names = F) 
 
+## add C17 - Jhou
+
+jhou_17_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Jhou #17 Shipping Sheet.xlsx")$`Jhou` %>% 
+  mutate(cohort = "C17") %>% 
+  uniform.var.names.cohort %>%
+  mutate(shipmentdate = as.Date("2020-09-29")) %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+jhou_17_wfu_metadata %>% id.qc
+# add comments 
+jhou_17_wfu_metadata <- jhou_17_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") 
+
+
 ######################
 ######## MITCHELL ####
 ######################
@@ -828,7 +843,9 @@ mitchell_wfu_metadata_c01_05 <- bind_rows(mitchell_c01_wfu_metadata, mitchell_c0
 
 # remove order in box (per Deborah's email 10/08)
 mitchell_wfu_metadata_c01_05 <- mitchell_wfu_metadata_c01_05 %>% 
-  select(-matches("order"))
+  select(-matches("order")) %>% 
+  select(cohort, everything()) %>% 
+  mutate(shipmentdate = lubridate::date(shipmentdate))
 
 
 ######################
