@@ -305,7 +305,32 @@ WFU_KalivasItaly_test_df %>% dplyr::filter(cohort == "06") %>%
   group_by(rack, shipmentbox) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack, shipmentbox)
 WFU_KalivasItaly_test_df %>% mutate(U01 = "KalivasItaly") %>% dplyr::filter(cohort == "06") %>% group_by(rack, shipmentbox) %>% count(sex) 
 
+
 # add resolution section XX can I assume that these are ignorable??? 
+
+## create WFU_KalivasItaly_test_df csv 
+WFU_KalivasItaly_test_df <- WFU_KalivasItaly_test_df %>% 
+  mutate_at(vars(one_of("dob", "dow", "shipmentdate")), as.Date) %>% 
+  mutate_at(vars(matches("litter|age|shipmentbox")), as.numeric) %>% 
+  rename("comments" = "comment") %>% 
+  mutate(cohort = paste0("C", cohort))
+
+## add C07 - Kalivas Italy
+
+kalivasitaly_07_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Italy #7 Shipping sheet.xlsx")$`Italy` %>% 
+  mutate(cohort = "C07") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+kalivasitaly_07_wfu_metadata %>% id.qc
+# add comments 
+kalivasitaly_07_wfu_metadata <- kalivasitaly_07_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  mutate(comments = replace(comments, rfid == "933000320048912", "WFU noted this is a male replacement")) %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
 
 ######################
 ## Kalivas(Heroine) ##
@@ -526,8 +551,15 @@ WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>%
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
 WFU_Jhou_test_df %>% dplyr::filter(cohort == "16") %>% group_by(rack) %>% count(sex) 
 
+
 # save file 
 setwd("~/Desktop/Database/csv files/u01_tom_jhou")
+# to allow for cohesive join
+WFU_Jhou_test_df <- WFU_Jhou_test_df %>% 
+  mutate_at(vars(one_of("dob", "dow", "shipmentdate")), as.Date) %>% 
+  mutate_at(vars(matches("litter|age|shipmentbox")), as.numeric) %>% 
+  rename("comments" = "comment") %>% 
+  mutate(cohort = paste0("C", cohort))
 write.csv(WFU_Jhou_test_df, file = "mastertable_c01_16_jhou.csv", row.names = F) 
 
 ## add C17 - Jhou
@@ -542,7 +574,25 @@ jhou_17_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie
 jhou_17_wfu_metadata %>% id.qc
 # add comments 
 jhou_17_wfu_metadata <- jhou_17_wfu_metadata %>% 
-  mutate(comments = "NA", resolution = "NA") 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
+## add C18 - Jhou
+
+jhou_18_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Jhou #18 Shipping Sheet.xlsx")$`Jhou` %>% 
+  mutate(cohort = "C18") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+jhou_18_wfu_metadata %>% id.qc
+# add comments 
+jhou_18_wfu_metadata <- jhou_18_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
 
 
 ######################
