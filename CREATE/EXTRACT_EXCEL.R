@@ -786,8 +786,8 @@ remove.irr.columns <- function(df){
 
 # function for assigning naive and removing empty rows 
 assign.naives <- function(df){
-  naivestarts_index <- grep("^Dam", olivier_oxy_09_wfu_metadata[, 1] %>% unlist() %>% as.character()) # row when new column names start
-  naive_rfids <- df$rfid[naivestarts_index:nrow(df)] # save the rfid's of the rows after new column names
+  naivestarts_index <- grep("^Dam", df[, 1] %>% unlist()) # row when new column names start
+  naive_rfids <- df$rfid[(naivestarts_index+1):nrow(df)] # save the rfid's of the rows after new column names
   df <- df %>% 
     mutate(comments = ifelse(rfid %in% naive_rfids, "Scrub", "NA")) # assign naive
   df <- df %>% 
@@ -800,7 +800,8 @@ uniform.coatcolors.df <- function(df){
   df$coatcolor <- toupper(df$coatcolor)  
   df$coatcolor <- gsub("([A-Z]+)(HOOD)", "\\1 \\2", mgsub::mgsub(df$coatcolor, 
                                                                         c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood|[H|h]hod", "[A|a]lbino"), 
-                                                                        c("BROWN", "BLACK", "HOOD", "ALBINO"))) 
+                                                                        c("BROWN", "BLACK", "HOOD", "ALBINO"))) %>% 
+    gsub(" ", "", .)
   return(df)
 }
 
@@ -814,7 +815,7 @@ add.age.qc <- function(df){
     } else x
   }
   df <- df %>% 
-    mutate_at(.vars = vars(date_vars), .funs = datefunction)
+    mutate_at(vars(one_of(date_vars)), .funs = datefunction)
   
   df <- df %>% 
     mutate(shipmentage = as.numeric(difftime(shipmentdate, dob, units = "days")) %>% round)
@@ -1414,15 +1415,17 @@ names(olivier_oxy_09_wfu_metadata) <- olivier_oxy_09_wfu_metadata[1,] %>% unlist
 olivier_oxy_09_wfu_metadata <- olivier_oxy_09_wfu_metadata[-1,]
 olivier_oxy_09_wfu_metadata <- olivier_oxy_09_wfu_metadata %>% 
   uniform.var.names.cohort %>%
+  assign.naives %>% 
   mutate(cohort = "C09") %>% 
   remove.irr.columns %>% 
   uniform.coatcolors.df %>% 
   add.age.qc 
-jhou_17_wfu_metadata %>% id.qc
+olivier_oxy_09_wfu_metadata %>% id.qc
 # add comments 
-jhou_17_wfu_metadata <- jhou_17_wfu_metadata %>% 
+olivier_oxy_09_wfu_metadata <- olivier_oxy_09_wfu_metadata %>% 
   mutate(comments = "NA", resolution = "NA") %>% 
   select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+write.csv(olivier_oxy_09_wfu_metadata, file = "~/Desktop/Database/csv files/u01_olivier_george_oxycodone/mastertable_c09_olivieroxy.csv", row.names = F) 
 
 
 
