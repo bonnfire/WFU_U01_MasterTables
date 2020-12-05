@@ -428,6 +428,29 @@ WFU_Kalivas_test_df <- WFU_Kalivas_test_df %>%
 ## for cleaning up environment for database (just keep the df necessary for left joins)
 # rm(list = grep("^WFU_.*(?<!_df)$", ls(), perl=TRUE, value=TRUE) )
 
+# for db 
+WFU_Kalivas_test_df <- WFU_Kalivas_test_df %>% 
+  mutate_at(vars(one_of("dob", "dow", "shipmentdate")), as.Date) %>% 
+  mutate_at(vars(matches("litter|age|shipmentbox")), as.numeric) %>% 
+  rename("comments" = "comment") %>% 
+  mutate(cohort = paste0("C", cohort))
+
+
+## add C07 - Kalivas
+
+kalivas_07_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/MUSC (Kalivas) Shipping sheet #7.xlsx")$`Kalivas` %>% 
+  mutate(cohort = "C07") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+kalivas_07_wfu_metadata %>% id.qc
+# add comments 
+kalivas_07_wfu_metadata <- kalivas_07_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
 ######################
 ######## JHOU ########
 ######################
@@ -752,9 +775,23 @@ uniform.var.names.cohort <- function(df){
 
 # use this function to get rid of columns that are all na's or contain redundant information
 remove.irr.columns <- function(df){
-  df <- df[ , colSums(is.na(df)) == 0]  # remove columns with any na's, checked for no na rows 
+  if(any(colSums(is.na(olivier_oxy_09_wfu_metadata))!=0)){
+    df <- df[ , colSums(is.na(df)) == 0]  # remove columns with any na's, checked for no na rows 
+    print("Removed columns that have any NA values")
+  }
   df <- df %>% 
     select(-matches("age|last"))  # remove age in day columns or last 5 digit columns
+  return(df)
+}
+
+# function for assigning naive and removing empty rows 
+assign.naives <- function(df){
+  naivestarts_index <- grep("^Dam", olivier_oxy_09_wfu_metadata[, 1] %>% unlist() %>% as.character()) # row when new column names start
+  naive_rfids <- df$rfid[naivestarts_index:nrow(df)] # save the rfid's of the rows after new column names
+  df <- df %>% 
+    mutate(comments = ifelse(rfid %in% naive_rfids, "Scrub", "NA")) # assign naive
+  df <- df %>% 
+    subset(!is.na(parse_number(rfid)))  # remove empty spacesaving rows and column names
   return(df)
 }
 
@@ -1354,6 +1391,42 @@ WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07", is.na(comment)) %
 WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% 
   group_by(rack) %>% count(sex) %>% ungroup() %>% janitor::get_dupes(rack)
 WFU_OlivierOxycodone_test_df %>% dplyr::filter(cohort == "07") %>% group_by(rack) %>% count(sex) %>% ungroup() %>% select(n) %>% table
+
+
+
+
+
+# save file 
+setwd("~/Desktop/Database/csv files/u01_olivier_george_oxycodone")
+# to allow for cohesive join
+WFU_OlivierOxycodone_test_df <- WFU_OlivierOxycodone_test_df %>% 
+  mutate_at(vars(one_of("dob", "dow", "shipmentdate")), as.Date) %>% 
+  mutate_at(vars(matches("litter|age|shipmentbox")), as.numeric) %>% 
+  rename("comments" = "comment") %>% 
+  mutate(cohort = paste0("C", cohort)) %>% 
+  mutate_all(~gsub(" ", "", .))
+write.csv(WFU_OlivierOxycodone_test_df, file = "mastertable_c01_08_olivieroxy.csv", row.names = F) 
+
+## add C09 - Olivier Oxy
+
+olivier_oxy_09_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/UCSD #14 Shipping Sheet.xlsx")$`OXY`
+names(olivier_oxy_09_wfu_metadata) <- olivier_oxy_09_wfu_metadata[1,] %>% unlist() %>% as.character()
+olivier_oxy_09_wfu_metadata <- olivier_oxy_09_wfu_metadata[-1,]
+olivier_oxy_09_wfu_metadata <- olivier_oxy_09_wfu_metadata %>% 
+  uniform.var.names.cohort %>%
+  mutate(cohort = "C09") %>% 
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+jhou_17_wfu_metadata %>% id.qc
+# add comments 
+jhou_17_wfu_metadata <- jhou_17_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
+
+
 
 
 
