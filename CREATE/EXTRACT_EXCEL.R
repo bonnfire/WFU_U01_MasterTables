@@ -330,6 +330,44 @@ kalivasitaly_07_wfu_metadata <- kalivasitaly_07_wfu_metadata %>%
   mutate(comments = replace(comments, rfid == "933000320048912", "WFU noted this is a male replacement")) %>% 
   select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
 
+## add C08 - Kalivas Italy
+
+kalivasitaly_08_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Italy #8 Shipping Sheet.xlsx")$`ITALY` %>% 
+  mutate(cohort = "C08") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+kalivasitaly_08_wfu_metadata %>% id.qc
+# add comments 
+kalivasitaly_08_wfu_metadata <- kalivasitaly_08_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  mutate_all(str_trim) %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+# sires dames qc 
+kalivasitaly_08_wfu_metadata %>% subset(
+  sires == dames|sires%in%unique(kalivasitaly_08_wfu_metadata$dames)|dames%in%unique(kalivasitaly_08_wfu_metadata$sires)
+)
+
+## add C09 - Kalivas Italy
+
+kalivasitaly_09_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Italy #9 Shipping Sheet.xlsx")$`ITALY` %>% 
+  mutate(cohort = "C09") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+kalivasitaly_09_wfu_metadata %>% id.qc
+# add comments 
+kalivasitaly_09_wfu_metadata <- kalivasitaly_09_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  mutate_all(str_trim) %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+# sires dames qc 
+kalivasitaly_09_wfu_metadata %>% subset(
+  sires == dames|sires%in%unique(kalivasitaly_09_wfu_metadata$dames)|dames%in%unique(kalivasitaly_09_wfu_metadata$sires)
+)
+
 
 
 ######################
@@ -447,6 +485,33 @@ kalivas_07_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bon
 kalivas_07_wfu_metadata %>% id.qc
 # add comments 
 kalivas_07_wfu_metadata <- kalivas_07_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+## add C08 - Kalivas
+kalivas_08_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/MUSC (Kalivas) shipsheet #8.xlsx")$`KALIVAS` %>% 
+  mutate(cohort = "C08") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+kalivas_08_wfu_metadata %>% id.qc
+# add comments 
+kalivas_08_wfu_metadata <- kalivas_08_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
+## add C09 - Kalivas
+kalivas_09_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/MUSC (Kalivas) Shipping Sheet #9.xlsx")$`Kalivas` %>% 
+  mutate(cohort = "C09") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+kalivas_09_wfu_metadata %>% id.qc
+# add comments 
+kalivas_09_wfu_metadata <- kalivas_09_wfu_metadata %>% 
   mutate(comments = "NA", resolution = "NA") %>% 
   select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
 
@@ -612,6 +677,21 @@ jhou_18_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie
 jhou_18_wfu_metadata %>% id.qc
 # add comments 
 jhou_18_wfu_metadata <- jhou_18_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
+## add C19 - Jhou
+
+jhou_19_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Jhou #19 shipping sheet.xlsx")$`Jhou` %>% 
+  mutate(cohort = "C19") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+jhou_19_wfu_metadata %>% id.qc
+# add comments 
+jhou_19_wfu_metadata <- jhou_19_wfu_metadata %>% 
   mutate(comments = "NA", resolution = "NA") %>% 
   select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
 
@@ -826,6 +906,9 @@ add.age.qc <- function(df){
     mutate(weanage = as.numeric(difftime(dow, dob, units = "days")) %>% round) 
   try(if(any(df$weanage > 25))
     stop("Some animals were too old to wean"))    
+  
+  try(if(any(df$shipmentage < 0|df$weanage < 0))
+    stop("Negative shipment or wean age, check for invalid dates"))
   
   return(df)
 }
@@ -1169,6 +1252,10 @@ WFU_OlivierCocaine_test_df %>% dplyr::filter(cohort == "13") %>% group_by(rack) 
 WFU_OlivierCocaine_test_df <- WFU_OlivierCocaine_test_df %>% mutate(cohort = paste0("C", cohort)) 
 setwd("~/Desktop/Database/csv files/u01_olivier_george_cocaine")
 WFU_OlivierCocaine_test_df %>% write.csv("cocaine_c01_13_n936.csv", row.names = F)
+
+
+
+
 
 ######################
 # Olivier(Oxycodone) #
