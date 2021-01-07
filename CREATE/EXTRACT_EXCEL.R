@@ -882,6 +882,7 @@ uniform.coatcolors.df <- function(df){
                                                                         c("BRN|[B|b]rown", "BLK|[B|b]lack", "HHOD|[H|h]ood|[H|h]hod", "[A|a]lbino"), 
                                                                         c("BROWN", "BLACK", "HOOD", "ALBINO"))) %>% 
     gsub(" ", "", .)
+  df$coatcolor <- gsub(" ", "", df$coatcolor)
   return(df)
 }
 
