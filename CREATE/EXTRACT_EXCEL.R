@@ -695,6 +695,21 @@ jhou_19_wfu_metadata <- jhou_19_wfu_metadata %>%
   mutate(comments = "NA", resolution = "NA") %>% 
   select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
 
+## add C20 - Jhou
+
+jhou_20_wfu_metadata <- u01.importxlsx("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/20190829_WFU_U01_ShippingMaster/Jhou #20 Shipping Sheet Revised.xlsx")$`Jhou` %>% 
+  mutate(cohort = "C20") %>% 
+  uniform.var.names.cohort %>%
+  remove.irr.columns %>% 
+  uniform.coatcolors.df %>% 
+  add.age.qc 
+jhou_20_wfu_metadata %>% id.qc
+# add comments 
+jhou_20_wfu_metadata <- jhou_20_wfu_metadata %>% 
+  mutate(comments = "NA", resolution = "NA") %>% 
+  select(cohort, sires, dames, labanimalid, accessid, sex, rfid, dob, dow, shipmentdate, litternumber, littersize, coatcolor, earpunch, rack, shipmentbox, shipmentage, weanage, comments, resolution) # to match the wfu sql in db
+
+
 
 
 
@@ -842,9 +857,11 @@ mitchell_wfu_c01_05 <- list.files(pattern = ".*xlsx")
 #### important functions
 # use this function to make variables uniform once the variables are in the names()
 uniform.var.names.cohort <- function(df){
+  df <- df[!duplicated(as.list(df))] # remove duplicated columns first
+  
   names(df) <- mgsub::mgsub(names(df),
-                            c(" |\\.", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
-                            c("", "Number", "RFID", "DOW","LabAnimal", "Shipment", "Dames"))
+                            c(" |\\.", "\\d+$", "#", "Transponder ID", "Date of Wean|Wean Date","Animal", "Shipping|Ship", "Dams"),
+                            c("", "", "Number", "RFID", "DOW","LabAnimal", "Shipment", "Dames"))
   
   names(df) <- mgsub::mgsub(names(df),
                             c("DateofShipment", "LabAnimalNumber"), 
@@ -855,12 +872,15 @@ uniform.var.names.cohort <- function(df){
 
 # use this function to get rid of columns that are all na's or contain redundant information
 remove.irr.columns <- function(df){
-  if(any(colSums(is.na(olivier_oxy_09_wfu_metadata))!=0)){
+  if(any(colSums(is.na(df))!=0)){
     df <- df[ , colSums(is.na(df)) == 0]  # remove columns with any na's, checked for no na rows 
     print("Removed columns that have any NA values")
   }
   df <- df %>% 
     select(-matches("age|last"))  # remove age in day columns or last 5 digit columns
+  
+  df <- df[!duplicated(as.list(df))]
+  
   return(df)
 }
 
